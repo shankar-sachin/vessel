@@ -1,0 +1,129 @@
+name: Vessel
+
+options:
+  bundleIdPrefix: com.sachinshankar
+  deploymentTarget:
+    iOS: "18.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    # Warnings we intend to keep at zero rather than learn to ignore.
+    GCC_TREAT_WARNINGS_AS_ERRORS: NO
+    CLANG_ANALYZER_NONNULL: YES
+    # Free personal teams can't use a fixed team id; Xcode picks one.
+    CODE_SIGN_STYLE: Automatic
+
+packages:
+  VesselCore:
+    path: Packages/VesselCore
+  VesselDesign:
+    path: Packages/VesselDesign
+  VesselNutrition:
+    path: Packages/VesselNutrition
+  VesselIntelligence:
+    path: Packages/VesselIntelligence
+  VesselVision:
+    path: Packages/VesselVision
+  VesselInsights:
+    path: Packages/VesselInsights
+  VesselIntents:
+    path: Packages/VesselIntents
+  VesselActivities:
+    path: Packages/VesselActivities
+
+targets:
+  Vessel:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: App
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sachinshankar.vessel
+        PRODUCT_NAME: Vessel
+        # 1 = iPhone, 2 = iPad. Universal from day one.
+        TARGETED_DEVICE_FAMILY: "1,2"
+        INFOPLIST_FILE: App/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+        SUPPORTS_MACCATALYST: NO
+        # The app supports every orientation on iPad; the layout is adaptive.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+    dependencies:
+      - package: VesselCore
+      - package: VesselDesign
+      - package: VesselNutrition
+      - package: VesselIntelligence
+      - package: VesselVision
+      - package: VesselInsights
+      - package: VesselIntents
+      - package: VesselActivities
+      - target: StreakWidget
+
+  # Live Activity / Dynamic Island. Renders state handed to it by ActivityKit,
+  # so it needs no App Group and works on a free developer account.
+  StreakWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: StreakWidget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sachinshankar.vessel.StreakWidget
+        PRODUCT_NAME: StreakWidget
+        INFOPLIST_FILE: StreakWidget/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+    dependencies:
+      - package: VesselActivities
+      - package: VesselDesign
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+
+  # UI tests. These are how visual changes get verified — tapping through real
+  # flows on a simulator and capturing screenshots, rather than eyeballing a
+  # static launch shot.
+  VesselUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: VesselUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sachinshankar.vessel.uitests
+        TEST_TARGET_NAME: Vessel
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: Vessel
+
+schemes:
+  Vessel:
+    build:
+      targets:
+        Vessel: all
+        VesselUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - VesselUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

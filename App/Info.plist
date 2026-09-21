@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Vessel</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
+
+	<!-- Live Activities for the streak countdown. These pass state through
+	     ActivityKit rather than a shared container, so they work without the
+	     App Groups entitlement. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
+
+	<!-- Permission strings. Each says what we do with the access and why, because
+	     a vague prompt is the most common reason people decline. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Vessel uses the microphone so you can log meals, drinks and symptoms by speaking instead of typing.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Vessel turns your speech into text on this device so it can understand what you logged.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Vessel uses the camera to recognise food on your plate and to scan barcodes on packaged items.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Vessel reads photos you choose so it can identify the food in them and attach them to your log.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Vessel saves meal photos you capture to your photo library.</string>
+
+	<!-- Background refresh lets us attempt to start the streak countdown before
+	     the deadline. iOS never guarantees this, so a scheduled local
+	     notification is the reliable backstop. -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.sachinshankar.vessel.streakwatch</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>processing</string>
+	</array>
+
+	<!-- Deep links. Required for the Live Activity tap target, the streak
+	     notification, and Siri/Spotlight to open a specific screen — without
+	     this registration every one of those silently fails to open the app. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.sachinshankar.vessel</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>vessel</string>
+			</array>
+		</dict>
+	</array>
+
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+</dict>
+</plist>

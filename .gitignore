@@ -1,0 +1,27 @@
+# Claude Code — never tracked
+CLAUDE.md
+.claude/
+
+# Generated Xcode project. Recreate with `xcodegen generate`; project.yml is the
+# source of truth, which is the whole point of using XcodeGen.
+*.xcodeproj/
+*.xcworkspace/
+
+# Build output
+.build/
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# SwiftPM
+.swiftpm/
+Package.resolved
+
+# macOS
+.DS_Store
