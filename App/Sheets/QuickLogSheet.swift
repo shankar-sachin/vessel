@@ -20,6 +20,8 @@ struct QuickLogSheet: View {
     @State private var parsed: ParsedEntry?
     @State private var resolved: [EntryResolver.ResolvedFood] = []
     @State private var isParsing = false
+    @State private var voiceError: String?
+    @StateObject private var voice = VoiceTranscriber()
     @FocusState private var inputFocused: Bool
 
     private let pipeline = ParsePipeline()
@@ -39,14 +41,38 @@ struct QuickLogSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("What did you have?", text: $input, axis: .vertical)
-                        .font(Typography.body)
-                        .lineLimit(1...4)
-                        .focused($inputFocused)
-                        .accessibilityIdentifier("quickLogField")
-                        .submitLabel(.done)
+                    HStack(alignment: .top, spacing: Layout.sm) {
+                        TextField("What did you have?", text: $input, axis: .vertical)
+                            .font(Typography.body)
+                            .lineLimit(1...4)
+                            .focused($inputFocused)
+                            .accessibilityIdentifier("quickLogField")
+                            .submitLabel(.done)
+
+                        MicButton(isListening: voice.isListening) {
+                            Task { await toggleVoice() }
+                        }
+                    }
+
+                    if voice.isListening {
+                        HStack(spacing: Layout.md) {
+                            Waveform(level: voice.audioLevel, tint: Palette.diet)
+                            Text(voice.transcript.isEmpty ? "Listening…" : voice.transcript)
+                                .font(Typography.callout)
+                                .foregroundStyle(voice.transcript.isEmpty ? Palette.inkTertiary : Palette.ink)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.vertical, Layout.xs)
+                        .transition(.opacity)
+                    }
+
+                    if let voiceError {
+                        Label(voiceError, systemImage: "exclamationmark.triangle")
+                            .font(Typography.caption)
+                            .foregroundStyle(Palette.caution)
+                    }
                 } footer: {
-                    Text("Say it however you'd say it out loud. Vessel works out the amounts.")
+                    Text("Say it however you'd say it out loud, or tap the microphone. Vessel works out the amounts.")
                 }
 
                 if let parsed, !input.isEmpty {
@@ -83,6 +109,9 @@ struct QuickLogSheet: View {
             .tint(Palette.diet)
         }
         .task(id: input) { await reparse() }
+        .onChange(of: voice.transcript) { _, _ in handleVoiceChange() }
+        .onChange(of: voice.state) { _, _ in handleVoiceChange() }
+        .onDisappear { voice.cancel() }
         .onAppear { inputFocused = true }
     }
 
@@ -188,6 +217,40 @@ struct QuickLogSheet: View {
         withAnimation(Motion.quick) {
             parsed = result.0
             resolved = result.1
+        }
+    }
+
+    // MARK: - Voice
+
+    private func toggleVoice() async {
+        voiceError = nil
+
+        if voice.isListening {
+            voice.stop()
+            return
+        }
+
+        inputFocused = false
+        await voice.start()
+
+        if case .failed(let failure) = voice.state {
+            voiceError = failure.message
+        }
+    }
+
+    /// Mirrors speech into the text field as it arrives, so the parse updates
+    /// while the user is still talking rather than only at the end.
+    private func handleVoiceChange() {
+        switch voice.state {
+        case .listening:
+            if !voice.transcript.isEmpty { input = voice.transcript }
+        case .finished(let text):
+            input = text
+            voiceError = nil
+        case .failed(let failure):
+            voiceError = failure.message
+        case .idle, .preparing:
+            break
         }
     }
 
@@ -372,5 +435,30 @@ private struct ConfidenceBadge: View {
             .padding(.vertical, 3)
             .background(tint.opacity(0.14), in: Capsule())
             .accessibilityLabel("Parser confidence: \(label)")
+    }
+}
+
+
+/// The microphone control.
+///
+/// Changes shape as well as colour when active, so the recording state survives
+/// a screenshot, a colourblind viewer, and a glance.
+private struct MicButton: View {
+    let isListening: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: isListening ? "stop.fill" : "mic.fill")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(isListening ? Color.white : Palette.diet)
+                .frame(width: 36, height: 36)
+                .background(
+                    Circle().fill(isListening ? Palette.diet : Palette.diet.opacity(0.14))
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(isListening ? "Stop listening" : "Dictate")
+        .accessibilityIdentifier("quickLogMic")
     }
 }

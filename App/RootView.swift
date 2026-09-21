@@ -151,7 +151,7 @@ private struct SheetDestinations: ViewModifier {
             case .logSymptom:      LogSymptomSheet()
             case .newJournalEntry: JournalEntrySheet()
             case .settings:        SettingsScreen()
-            case .capture:         PlaceholderSheet(title: "Capture", tint: Palette.diet)
+            case .capture:         CaptureSheet()
             }
         }
     }

@@ -72,6 +72,28 @@ final class TourUITests: XCTestCase {
         pause(1.6)
         capture("tour-9-water-settled")
 
+        // Voice: the microphone control beside the text field.
+        app.tabBars.buttons["Today"].tap()
+        pause(0.6)
+        app.buttons["quickLogPrompt"].tap()
+        XCTAssertTrue(app.navigationBars["Quick log"].waitForExistence(timeout: 5))
+        pause(0.8)
+        if app.buttons["quickLogMic"].exists {
+            capture("tour-11-voice-available")
+        }
+        app.buttons["Cancel"].tap()
+        pause(0.6)
+
+        // Logging from a photo or a barcode.
+        if app.buttons["capturePrompt"].exists {
+            app.buttons["capturePrompt"].tap()
+            XCTAssertTrue(app.navigationBars["From a photo"].waitForExistence(timeout: 5))
+            pause()
+            capture("tour-12-capture")
+            app.buttons["Cancel"].tap()
+            pause(0.6)
+        }
+
         // Settings, including the fasting plans and backup
         app.tabBars.buttons["Today"].tap()
         pause(0.6)

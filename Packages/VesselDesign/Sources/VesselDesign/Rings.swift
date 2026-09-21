@@ -63,14 +63,21 @@ public struct ProgressRing: View {
 /// The streak ring: one segment per meal required today.
 ///
 /// Segments rather than a continuous arc because the requirement is discrete —
-/// you've logged two of three meals, not 66.7% of a meal. Showing it as a smooth
-/// sweep would misrepresent what the number means.
+/// you've logged two of three meals, not 66.7% of a meal. Showing it as a
+/// smooth sweep would misrepresent what the number means.
+///
+/// The three states are distinguished by colour *and* by form, so the ring
+/// still reads correctly in greyscale and for colour-vision deficiency:
+/// in progress is a warm ember, met is a closed green ring with a tick, and
+/// at risk keeps the ember but breathes.
 public struct StreakRing: View {
     private let logged: Int
     private let required: Int
     private let tint: Color
     private let lineWidth: CGFloat
     private let isAtRisk: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
         logged: Int,
@@ -86,40 +93,88 @@ public struct StreakRing: View {
         self.isAtRisk = isAtRisk
     }
 
-    /// Gap between segments, as a fraction of the circle. Scales down as segments
-    /// multiply so a five-meal plan doesn't turn into dashes.
+    private var isComplete: Bool { logged >= required }
+    private var activeTint: Color { isComplete ? Palette.positive : tint }
+
+    /// Gap between segments, as a fraction of the circle.
+    ///
+    /// Generous on purpose — each arc should read as *one meal*, a separate
+    /// thing you either did or didn't do, rather than as a progress bar that
+    /// happens to be dashed. Scaled down as segments multiply so a five-meal
+    /// plan doesn't dissolve into ticks.
     private var gapFraction: Double {
-        min(0.04, 0.12 / Double(required))
+        min(0.085, 0.30 / Double(required))
     }
 
     private var segmentFraction: Double {
         (1.0 / Double(required)) - gapFraction
     }
 
-    public var body: some View {
-        ZStack {
-            ForEach(0..<required, id: \.self) { index in
-                let start = Double(index) / Double(required) + gapFraction / 2
-                let filled = index < logged
+    /// A warm two-stop ramp. Flat orange reads as a progress bar bent into a
+    /// circle; a ramp reads as something burning down.
+    private var fillGradient: AngularGradient {
+        AngularGradient(
+            gradient: Gradient(colors: isComplete
+                ? [Palette.positive, Palette.positive.opacity(0.75), Palette.positive]
+                : [tint, Color(hex: 0xE8562E), tint]),
+            center: .center,
+            startAngle: .degrees(-90),
+            endAngle: .degrees(270)
+        )
+    }
 
+    public var body: some View {
+        GeometryReader { geo in
+            let size = min(geo.size.width, geo.size.height)
+
+            ZStack {
+                // A barely-there disc so the ring sits on something rather than
+                // floating on the card.
                 Circle()
-                    .trim(from: start, to: start + segmentFraction)
-                    .stroke(
-                        filled ? tint : tint.opacity(0.16),
-                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                    .fill(
+                        RadialGradient(
+                            colors: [activeTint.opacity(0.10), activeTint.opacity(0.01)],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: size / 2
+                        )
                     )
-                    .rotationEffect(.degrees(-90))
+
+                // Unfilled track, drawn per segment so the gaps line up exactly
+                // with the filled ones.
+                ForEach(0..<required, id: \.self) { index in
+                    segment(index: index)
+                        .stroke(
+                            activeTint.opacity(0.14),
+                            style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                        )
+                }
+
+                // Filled segments, with a soft bloom underneath so the ring has
+                // some depth instead of sitting flat on the card.
+                ForEach(0..<min(logged, required), id: \.self) { index in
+                    segment(index: index)
+                        .stroke(fillGradient, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                        .shadow(color: activeTint.opacity(0.35), radius: 5, y: 1)
+                }
             }
+            .frame(width: size, height: size)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        // A gentle pulse when the deadline is near. Reduce Motion users get a
-        // static ring — the warning is also carried by color and text, never by
-        // motion alone.
-        .modifier(AtRiskPulse(isActive: isAtRisk, tint: tint))
+        .modifier(AtRiskPulse(isActive: isAtRisk && !isComplete, tint: tint))
         .vesselAnimation(Motion.celebrate, value: logged)
         .accessibilityElement()
         .accessibilityLabel("Meals logged today")
         .accessibilityValue("\(logged) of \(required)")
     }
+
+    private func segment(index: Int) -> some Shape {
+        let start = Double(index) / Double(required) + gapFraction / 2
+        return Circle()
+            .trim(from: start, to: start + segmentFraction)
+            .rotation(.degrees(-90))
+    }
+
 }
 
 private struct AtRiskPulse: ViewModifier {
@@ -259,5 +314,70 @@ public struct MacroBar: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(name)
         .accessibilityValue(goal.map { "\(Int(value)) of \(Int($0)) grams" } ?? "\(Int(value)) grams")
+    }
+}
+
+/// The day's meals, named and ticked off.
+///
+/// Sits beside the streak ring rather than inside it. Crowded into the ring the
+/// icons collided with the streak count and were too small to read; given their
+/// own row they answer the question the ring can't — *which* meal is missing.
+public struct MealProgressRow: View {
+
+    /// One meal: its symbol, its name, and whether it's logged.
+    public struct Meal: Identifiable, Hashable, Sendable {
+        public let symbol: String
+        public let title: String
+        public let isLogged: Bool
+
+        public var id: String { title }
+
+        public init(symbol: String, title: String, isLogged: Bool) {
+            self.symbol = symbol
+            self.title = title
+            self.isLogged = isLogged
+        }
+    }
+
+    private let meals: [Meal]
+    private let tint: Color
+
+    public init(meals: [Meal], tint: Color = Palette.streak) {
+        self.meals = meals
+        self.tint = tint
+    }
+
+    public var body: some View {
+        HStack(spacing: Layout.sm) {
+            ForEach(meals) { meal in
+                VStack(spacing: 5) {
+                    ZStack {
+                        Circle()
+                            .fill(meal.isLogged ? tint.opacity(0.16) : Palette.separator.opacity(0.28))
+                            .frame(width: 34, height: 34)
+
+                        // Outlined while outstanding, filled once logged — the
+                        // progress is legible from the icons alone, without
+                        // relying on colour.
+                        Image(systemName: meal.isLogged
+                              ? meal.symbol
+                              : (meal.symbol.hasSuffix(".fill")
+                                 ? String(meal.symbol.dropLast(5))
+                                 : meal.symbol))
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(meal.isLogged ? tint : Palette.inkTertiary)
+                    }
+
+                    Text(meal.title)
+                        .font(Typography.caption)
+                        .foregroundStyle(meal.isLogged ? Palette.inkSecondary : Palette.inkTertiary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(meal.title): \(meal.isLogged ? "logged" : "not yet")")
+            }
+        }
     }
 }

@@ -75,7 +75,10 @@ struct TodayScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Layout.xl) {
-                QuickLogPrompt { router.present(.quickLog) }
+                HStack(spacing: Layout.sm) {
+                    QuickLogPrompt { router.present(.quickLog) }
+                    CameraButton { router.present(.capture) }
+                }
 
                 StreakCard(
                     streak: streak,
@@ -169,6 +172,26 @@ private struct QuickLogPrompt: View {
     }
 }
 
+/// Logging from a photo or a barcode.
+private struct CameraButton: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            Image(systemName: "camera.fill")
+                .font(.body)
+                .foregroundStyle(Palette.diet)
+                .frame(width: 48, height: 48)
+                .background(Palette.surface, in: Circle())
+                .overlay(Circle().strokeBorder(Palette.separator, lineWidth: 0.5))
+                .shadow(color: Color(hex: 0x3A2E20).opacity(0.05), radius: 6, y: 2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Log from a photo")
+        .accessibilityIdentifier("capturePrompt")
+    }
+}
+
 // MARK: - Streak
 
 private struct StreakCard: View {
@@ -181,44 +204,72 @@ private struct StreakCard: View {
 
     var body: some View {
         VesselCard(padding: Layout.lg) {
-            HStack(alignment: .center, spacing: Layout.lg) {
-                ZStack {
-                    StreakRing(
-                        logged: progress.logged,
-                        required: progress.required,
-                        isAtRisk: isAtRisk
-                    )
-                    VStack(spacing: 0) {
-                        Text("\(streak.current)")
-                            .font(Typography.metric)
-                            .foregroundStyle(Palette.streak)
-                            .contentTransition(.numericText())
-                        Text(streak.current == 1 ? "day" : "days")
-                            .font(Typography.caption)
-                            .foregroundStyle(Palette.inkTertiary)
+            VStack(alignment: .leading, spacing: Layout.lg) {
+                HStack(alignment: .center, spacing: Layout.lg) {
+                    ZStack {
+                        StreakRing(
+                            logged: progress.logged,
+                            required: progress.required,
+                            lineWidth: 12,
+                            isAtRisk: isAtRisk
+                        )
+
+                        VStack(spacing: -2) {
+                            if progress.isQualified {
+                                // The day is done, so the streak count is the
+                                // whole story.
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(Palette.positive)
+                                    .padding(.bottom, 1)
+                            }
+                            Text("\(streak.current)")
+                                .font(.system(size: 34, design: .rounded).weight(.bold))
+                                .monospacedDigit()
+                                .foregroundStyle(progress.isQualified ? Palette.positive : Palette.streak)
+                                .contentTransition(.numericText())
+                            Text(streak.current == 1 ? "day" : "days")
+                                .font(Typography.caption)
+                                .foregroundStyle(Palette.inkTertiary)
+                        }
                     }
-                }
-                .frame(width: 104, height: 104)
+                    .frame(width: 104, height: 104)
 
-                VStack(alignment: .leading, spacing: Layout.xs) {
-                    Text(headline)
-                        .font(Typography.heading)
-                        .foregroundStyle(Palette.ink)
+                    VStack(alignment: .leading, spacing: Layout.xs) {
+                        Text(headline)
+                            .font(Typography.heading)
+                            .foregroundStyle(Palette.ink)
 
-                    Text(detail)
-                        .font(Typography.callout)
-                        .foregroundStyle(isAtRisk ? Palette.streak : Palette.inkSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        Text(detail)
+                            .font(Typography.callout)
+                            .foregroundStyle(isAtRisk ? Palette.streak : Palette.inkSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
 
-                    if streak.longest > streak.current, streak.longest > 0 {
-                        Text("Best: \(streak.longest) days")
-                            .font(Typography.caption)
-                            .foregroundStyle(Palette.inkTertiary)
-                            .padding(.top, 2)
+                        if streak.longest > streak.current, streak.longest > 0 {
+                            Text("Best: \(streak.longest) days")
+                                .font(Typography.caption)
+                                .foregroundStyle(Palette.inkTertiary)
+                                .padding(.top, 2)
+                        }
                     }
+
+                    Spacer(minLength: 0)
                 }
 
-                Spacer(minLength: 0)
+                Divider().overlay(Palette.separator)
+
+                // The meals themselves, named. The ring says how much of the
+                // day is done; this says which part is missing.
+                MealProgressRow(
+                    meals: plan.qualifyingSlots.prefix(progress.required).map { slot in
+                        MealProgressRow.Meal(
+                            symbol: slot.symbol,
+                            title: slot.title,
+                            isLogged: progress.slotsLogged.contains(slot)
+                        )
+                    },
+                    tint: progress.isQualified ? Palette.positive : Palette.streak
+                )
             }
         }
         .accessibilityElement(children: .combine)

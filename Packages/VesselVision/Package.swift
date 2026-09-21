@@ -22,6 +22,9 @@ let package = Package(
         .testTarget(
             name: "VesselVisionTests",
             dependencies: ["VesselVision"],
+            // Real food photographs, so the recogniser is measured against
+            // actual images rather than assumed to work.
+            resources: [.copy("Fixtures")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         )
     ]
