@@ -145,10 +145,10 @@ private struct SheetDestinations: ViewModifier {
 
         content.sheet(item: $router.presentedSheet) { destination in
             switch destination {
-            case .logFood:         PlaceholderSheet(title: "Log food", tint: Palette.diet)
-            case .logWater:        PlaceholderSheet(title: "Log water", tint: Palette.water)
-            case .logSymptom:      PlaceholderSheet(title: "Log symptom", tint: Palette.symptom)
-            case .newJournalEntry: PlaceholderSheet(title: "New entry", tint: Palette.journal)
+            case .logFood:         LogFoodSheet()
+            case .logWater:        LogWaterSheet()
+            case .logSymptom:      LogSymptomSheet()
+            case .newJournalEntry: JournalEntrySheet()
             case .settings:        SettingsScreen()
             case .capture:         PlaceholderSheet(title: "Capture", tint: Palette.diet)
             }

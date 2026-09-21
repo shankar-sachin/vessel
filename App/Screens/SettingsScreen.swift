@@ -24,6 +24,7 @@ struct SettingsScreen: View {
                     goalsSection(profile)
                     unitsSection(profile)
                 }
+                DataSettingsSection()
                 capabilitySection
                 aboutSection
             }
@@ -198,7 +199,7 @@ struct SettingsScreen: View {
         } header: {
             Text("About")
         } footer: {
-            Text("Vessel keeps your log on your device. Nothing is uploaded.")
+            Text("Vessel keeps your log on your device. Nothing is sent anywhere except the backup folder you choose.")
         }
     }
 

@@ -9,7 +9,10 @@ import VesselDesign
 struct JournalScreen: View {
     @Environment(AppRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.modelContext) private var context
     @Query(sort: \JournalEntry.createdAt, order: .reverse) private var entries: [JournalEntry]
+
+    @State private var editingEntry: JournalEntry?
 
     var body: some View {
         Group {
@@ -25,7 +28,25 @@ struct JournalScreen: View {
                 ScrollView {
                     LazyVStack(spacing: Layout.md) {
                         ForEach(entries) { entry in
-                            JournalCard(entry: entry)
+                            Button {
+                                editingEntry = entry
+                            } label: {
+                                JournalCard(entry: entry)
+                            }
+                            .buttonStyle(.plain)
+                            .contextMenu {
+                                Button {
+                                    editingEntry = entry
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                Button(role: .destructive) {
+                                    context.delete(entry)
+                                    try? context.save()
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                     .screenGutter()
@@ -43,6 +64,9 @@ struct JournalScreen: View {
                 }
                 .tint(Palette.journal)
             }
+        }
+        .sheet(item: $editingEntry) { entry in
+            JournalEntrySheet(existing: entry)
         }
     }
 }

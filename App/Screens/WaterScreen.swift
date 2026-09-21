@@ -14,6 +14,8 @@ struct WaterScreen: View {
     /// Incremented on every pour so the hero vessel knows to slosh. The value
     /// itself is meaningless — only the change matters.
     @State private var splashToken = 0
+    @State private var editingEntry: WaterEntry?
+    @State private var isAddingCustom = false
 
     private var profile: UserProfile? { profiles.first }
     private var engine: StreakEngine { profile?.makeStreakEngine() ?? StreakEngine() }
@@ -41,6 +43,7 @@ struct WaterScreen: View {
             VStack(spacing: Layout.xl) {
                 heroCard
                 quickAddRow
+                customAmountButton
                 todaysDrinksCard
             }
             .screenGutter()
@@ -49,6 +52,12 @@ struct WaterScreen: View {
         }
         .background(Palette.ground)
         .navigationTitle("Water Diary")
+        .sheet(isPresented: $isAddingCustom) {
+            LogWaterSheet()
+        }
+        .sheet(item: $editingEntry) { entry in
+            LogWaterSheet(existing: entry)
+        }
     }
 
     private var heroCard: some View {
@@ -102,6 +111,19 @@ struct WaterScreen: View {
         }
     }
 
+    private var customAmountButton: some View {
+        Button {
+            isAddingCustom = true
+        } label: {
+            Label("Another amount", systemImage: "plus.circle")
+                .font(Typography.callout)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(Palette.water)
+        .frame(maxWidth: .infinity)
+        .frame(minHeight: Layout.minTouchTarget)
+    }
+
     private var todaysDrinksCard: some View {
         VesselCard {
             VStack(alignment: .leading, spacing: Layout.md) {
@@ -113,25 +135,42 @@ struct WaterScreen: View {
                         .foregroundStyle(Palette.inkTertiary)
                 } else {
                     ForEach(todaysEntries) { entry in
-                        HStack(spacing: Layout.md) {
-                            Image(systemName: "drop.fill")
-                                .foregroundStyle(Palette.water)
-                                .frame(width: 22)
-                            Text(entry.containerName ?? "Drink")
-                                .font(Typography.body)
-                                .foregroundStyle(Palette.ink)
-                            Spacer()
-                            Text("\(Int(entry.volumeML)) ml")
-                                .font(Typography.numeric)
-                                .foregroundStyle(Palette.inkSecondary)
-                            Text(entry.loggedAt, format: .dateTime.hour().minute())
-                                .font(Typography.caption)
-                                .foregroundStyle(Palette.inkTertiary)
+                        Button {
+                            editingEntry = entry
+                        } label: {
+                            HStack(spacing: Layout.md) {
+                                Image(systemName: entry.containsCaffeine ? "cup.and.saucer.fill" : "drop.fill")
+                                    .foregroundStyle(Palette.water)
+                                    .frame(width: 22)
+                                Text(entry.containerName ?? "Drink")
+                                    .font(Typography.body)
+                                    .foregroundStyle(Palette.ink)
+                                Spacer()
+                                Text("\(Int(entry.volumeML)) ml")
+                                    .font(Typography.numeric)
+                                    .foregroundStyle(Palette.inkSecondary)
+                                Text(entry.loggedAt, format: .dateTime.hour().minute())
+                                    .font(Typography.caption)
+                                    .foregroundStyle(Palette.inkTertiary)
+                            }
+                            .padding(.vertical, 2)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.vertical, 2)
+                        .buttonStyle(.plain)
                         .accessibilityElement(children: .combine)
+                        .contextMenu {
+                            Button {
+                                editingEntry = entry
+                            } label: {
+                                Label("Edit", systemImage: "pencil")
+                            }
+                            Button(role: .destructive) {
+                                delete(entry)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
                     }
-                    .onDelete(perform: delete)
                 }
             }
         }
@@ -146,10 +185,8 @@ struct WaterScreen: View {
         splashToken += 1
     }
 
-    private func delete(at offsets: IndexSet) {
-        for index in offsets {
-            context.delete(todaysEntries[index])
-        }
+    private func delete(_ entry: WaterEntry) {
+        context.delete(entry)
         try? context.save()
     }
 }

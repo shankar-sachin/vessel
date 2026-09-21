@@ -7,7 +7,11 @@ import VesselDesign
 struct DietScreen: View {
     @Environment(AppRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.modelContext) private var context
     @Query(sort: \FoodEntry.loggedAt, order: .reverse) private var entries: [FoodEntry]
+
+    /// The meal being edited, if any.
+    @State private var editingEntry: FoodEntry?
     @Query(sort: \UserProfile.createdAt) private var profiles: [UserProfile]
 
     private var engine: StreakEngine {
@@ -39,7 +43,24 @@ struct DietScreen: View {
                             Section {
                                 VStack(spacing: Layout.md) {
                                     ForEach(group.entries) { entry in
-                                        FoodEntryCard(entry: entry)
+                                        Button {
+                                            editingEntry = entry
+                                        } label: {
+                                            FoodEntryCard(entry: entry)
+                                        }
+                                        .buttonStyle(.plain)
+                                        .contextMenu {
+                                            Button {
+                                                editingEntry = entry
+                                            } label: {
+                                                Label("Edit", systemImage: "pencil")
+                                            }
+                                            Button(role: .destructive) {
+                                                delete(entry)
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                        }
                                     }
                                 }
                             } header: {
@@ -63,6 +84,17 @@ struct DietScreen: View {
                 .tint(Palette.diet)
             }
         }
+        .sheet(item: $editingEntry) { entry in
+            LogFoodSheet(existing: entry)
+        }
+    }
+
+    private func delete(_ entry: FoodEntry) {
+        context.delete(entry)
+        try? context.save()
+        // Removing a meal can break today's streak, so both reminder surfaces
+        // need to hear about it.
+        Task { await StreakCoordinator.refresh(context: context) }
     }
 
     private func totalCalories(_ entries: [FoodEntry]) -> Double {

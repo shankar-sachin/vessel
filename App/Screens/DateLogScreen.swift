@@ -10,7 +10,10 @@ import VesselDesign
 struct DateLogScreen: View {
     @Environment(AppRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var sizeClass
+    @Environment(\.modelContext) private var context
     @Query(sort: \SymptomEntry.occurredAt, order: .reverse) private var entries: [SymptomEntry]
+
+    @State private var editingEntry: SymptomEntry?
 
     private var grouped: [(day: Date, entries: [SymptomEntry])] {
         Dictionary(grouping: entries) { Calendar.current.startOfDay(for: $0.occurredAt) }
@@ -39,7 +42,25 @@ struct DateLogScreen: View {
                                     .font(Typography.title)
                                     .foregroundStyle(Palette.ink)
                                 ForEach(group.entries) { entry in
-                                    SymptomCard(entry: entry)
+                                    Button {
+                                        editingEntry = entry
+                                    } label: {
+                                        SymptomCard(entry: entry)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .contextMenu {
+                                        Button {
+                                            editingEntry = entry
+                                        } label: {
+                                            Label("Edit", systemImage: "pencil")
+                                        }
+                                        Button(role: .destructive) {
+                                            context.delete(entry)
+                                            try? context.save()
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -59,6 +80,9 @@ struct DateLogScreen: View {
                 }
                 .tint(Palette.symptom)
             }
+        }
+        .sheet(item: $editingEntry) { entry in
+            LogSymptomSheet(existing: entry)
         }
     }
 

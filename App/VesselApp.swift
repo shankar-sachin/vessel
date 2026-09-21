@@ -30,10 +30,21 @@ struct VesselApp: App {
                 .task { await bootstrap() }
                 .onOpenURL { router.handle(deepLink: $0) }
                 .onChange(of: scenePhase) { _, phase in
-                    // Returning to the app is the most reliable moment we get to
-                    // bring the Live Activity up to date.
-                    guard phase == .active else { return }
-                    Task { await StreakCoordinator.refresh(context: container.mainContext) }
+                    let context = container.mainContext
+                    switch phase {
+                    case .active:
+                        // Returning to the app is the most reliable moment we get
+                        // to bring the Live Activity up to date, and to pick up
+                        // anything another device left in the backup folder.
+                        Task {
+                            await BackupCoordinator.shared.syncOnAppear(context: context)
+                            await StreakCoordinator.refresh(context: context)
+                        }
+                    case .background:
+                        BackupCoordinator.shared.syncOnBackground(context: context)
+                    default:
+                        break
+                    }
                 }
         }
         .modelContainer(container)
@@ -61,6 +72,7 @@ struct VesselApp: App {
         }
         #endif
 
+        await BackupCoordinator.shared.syncOnAppear(context: context)
         await StreakCoordinator.refresh(context: context)
         StreakCoordinator.scheduleBackgroundRefresh(context: context)
     }

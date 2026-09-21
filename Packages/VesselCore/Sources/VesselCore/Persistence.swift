@@ -18,13 +18,28 @@ public enum VesselStore {
 
     /// The app's on-disk container.
     ///
-    /// Local-only today. The schema is already written to CloudKit's rules, so
-    /// turning sync on later means adding a `cloudKitDatabase:` argument here and
-    /// nothing else — no migration, no model changes.
+    /// Local-only today, because CloudKit needs a paid Apple Developer Program
+    /// membership and this app is signed with a free personal team. Until then
+    /// `BackupCoordinator` covers cross-device data via a user-chosen folder.
+    ///
+    /// ### Turning on real iCloud sync
+    ///
+    /// Once the membership exists, this is the whole change:
+    ///
+    /// 1. Add the iCloud capability with CloudKit to the app target in
+    ///    `project.yml`, plus an `iCloud.com.sachinshankar.vessel` container.
+    /// 2. Change the configuration below to
+    ///    `.private("iCloud.com.sachinshankar.vessel")`.
+    ///
+    /// No migration and no model edits, because the schema already follows
+    /// CloudKit's rules — every property defaulted or optional, no unique
+    /// attributes, every relationship optional with an inverse. That was the
+    /// point of writing it that way from the start.
     public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
         let configuration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: inMemory
+            isStoredInMemoryOnly: inMemory,
+            cloudKitDatabase: .none
         )
         return try ModelContainer(for: schema, configurations: [configuration])
     }

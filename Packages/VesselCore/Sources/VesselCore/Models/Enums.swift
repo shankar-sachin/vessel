@@ -141,7 +141,7 @@ public enum Severity: Int, Codable, Sendable, CaseIterable, Identifiable {
         switch self {
         case .trace:    return "Barely there"
         case .mild:     return "Mild"
-        case .moderate: return "Noticeable"
+        case .moderate: return "Moderate"
         case .strong:   return "Disruptive"
         case .severe:   return "Severe"
         }
