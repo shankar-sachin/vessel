@@ -16,7 +16,14 @@ let package = Package(
             name: "VesselIntelligence",
             dependencies: [
                 .product(name: "VesselCore", package: "VesselCore"),
-                .product(name: "VesselNutrition", package: "VesselNutrition"),            ],
+                .product(name: "VesselNutrition", package: "VesselNutrition")
+            ],
+            // `.process` compiles the Core ML models at build time, so the app
+            // loads a ready .mlmodelc instead of compiling on first launch.
+            resources: [
+                .process("Resources/VesselIntent.mlmodel"),
+                .process("Resources/VesselTagger.mlmodel")
+            ],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(

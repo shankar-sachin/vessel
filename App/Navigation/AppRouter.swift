@@ -26,6 +26,7 @@ final class AppRouter {
     var pendingDeepLink: DeepLink?
 
     enum SheetDestination: Identifiable, Hashable {
+        case quickLog
         case logFood
         case logWater
         case logSymptom
@@ -38,6 +39,7 @@ final class AppRouter {
 
     enum DeepLink: Hashable {
         case module(AppModule)
+        case quickLog
         case logFood
         case logWater
         case logSymptom
@@ -88,6 +90,7 @@ final class AppRouter {
         let segments = ([url.host()] + url.pathComponents.filter { $0 != "/" }).compactMap { $0 }
 
         switch segments {
+        case ["log"], ["quick"]: handle(.quickLog)
         case ["log", "food"]:    handle(.logFood)
         case ["log", "water"]:   handle(.logWater)
         case ["log", "symptom"]: handle(.logSymptom)
@@ -101,6 +104,7 @@ final class AppRouter {
     func handle(_ link: DeepLink) {
         switch link {
         case .module(let m):     module = m
+        case .quickLog:          presentedSheet = .quickLog
         case .logFood:           module = .diet;    presentedSheet = .logFood
         case .logWater:          module = .water;   presentedSheet = .logWater
         case .logSymptom:        module = .dateLog; presentedSheet = .logSymptom

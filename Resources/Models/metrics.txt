@@ -1,0 +1,26 @@
+Intent accuracy: 0.9958 (gate 0.90)
+
+Intent confusion (actual → predicted):
+  correction  97.9% correct (187/191)  — missed as logFood ×4
+  journalEntry  99.0% correct (476/481)  — missed as logFood ×5
+  logFood  99.6% correct (2621/2631)  — missed as logSymptom ×5, logWater ×4, journalEntry ×1
+  logSymptom  99.6% correct (728/731)  — missed as logFood ×1, correction ×1, journalEntry ×1
+  logWater 100.0% correct (800/800)
+  query 100.0% correct (375/375)
+
+Tagger per-label scores:
+  BRAND P 0.997  R 0.969  F1 0.983  (n=322)
+  DRINK P 1.000  R 0.999  F1 0.999  (n=1942)
+  FOOD P 0.988  R 0.996  F1 0.992  (n=11323)
+  MEAL P 1.000  R 0.996  F1 0.998  (n=1037)
+  NEG P 0.994  R 0.994  F1 0.994  (n=330)
+  NONE P 1.000  R 0.999  F1 0.999  (n=13306)
+  PREP P 0.926  R 0.834  F1 0.878  (n=603)
+  QTY P 0.999  R 0.999  F1 0.999  (n=4434)
+  SEVERITY P 1.000  R 0.986  F1 0.993  (n=286)
+  SYMPTOM P 0.998  R 0.996  F1 0.997  (n=1103)
+  TIME P 0.999  R 0.998  F1 0.998  (n=1701)
+  UNIT P 0.997  R 0.999  F1 0.998  (n=1600)
+
+Tagger token accuracy: 0.9948
+Tagger macro F1: 0.9858 (gate 0.85)

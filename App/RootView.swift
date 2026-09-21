@@ -145,6 +145,7 @@ private struct SheetDestinations: ViewModifier {
 
         content.sheet(item: $router.presentedSheet) { destination in
             switch destination {
+            case .quickLog:        QuickLogSheet()
             case .logFood:         LogFoodSheet()
             case .logWater:        LogWaterSheet()
             case .logSymptom:      LogSymptomSheet()

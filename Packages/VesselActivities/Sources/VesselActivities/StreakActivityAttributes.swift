@@ -45,10 +45,43 @@ public struct StreakActivityAttributes: Sendable, Hashable, Codable {
         /// a bare number.
         public var nextSlotName: String?
 
-        public init(logged: Int, streakCount: Int, nextSlotName: String? = nil) {
+        /// Which meal slots are already logged, as raw `MealSlot` values.
+        ///
+        /// Lets the island draw the day as actual meals — breakfast done, lunch
+        /// done, dinner outstanding — instead of anonymous pips. Knowing *which*
+        /// meal is missing is more useful at a glance than knowing how many are.
+        public var loggedSlots: [String]
+
+        /// Every slot the plan counts, in order, so the island can render the
+        /// whole day rather than inferring it from a count.
+        public var planSlots: [String]
+
+        public init(
+            logged: Int,
+            streakCount: Int,
+            nextSlotName: String? = nil,
+            loggedSlots: [String] = [],
+            planSlots: [String] = []
+        ) {
             self.logged = logged
             self.streakCount = streakCount
             self.nextSlotName = nextSlotName
+            self.loggedSlots = loggedSlots
+            self.planSlots = planSlots
+        }
+
+        /// SF Symbol for a slot, kept here so the app and widget agree.
+        public static func symbol(forSlot slot: String) -> String {
+            switch slot {
+            case "breakfast": return "sunrise.fill"
+            case "lunch":     return "sun.max.fill"
+            case "dinner":    return "moon.stars.fill"
+            default:          return "carrot.fill"
+            }
+        }
+
+        public static func title(forSlot slot: String) -> String {
+            slot.prefix(1).uppercased() + slot.dropFirst()
         }
     }
 }

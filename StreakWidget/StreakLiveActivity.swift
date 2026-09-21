@@ -6,6 +6,11 @@ import VesselDesign
 
 /// The streak countdown, on the Lock Screen and in the Dynamic Island.
 ///
+/// Designed around one question — *what do I still have to eat today?* — so it
+/// draws the day as actual meals rather than a bar and a number. Seeing that
+/// breakfast and lunch are filled and dinner isn't answers that instantly;
+/// "2/3" makes you work it out.
+///
 /// Every time display uses `Text(timerInterval:)` rather than a string we
 /// compute. That matters: the system re-renders the countdown itself, once a
 /// second, without waking our process. Formatting it ourselves would mean the
@@ -17,51 +22,47 @@ struct StreakLiveActivity: Widget {
                 // Deliberately a deep neutral rather than the app's parchment
                 // ground: this sits over whatever wallpaper the user has, and a
                 // near-white tint disappears against a light photo.
-                .activityBackgroundTint(Color(hex: 0x1C1A18).opacity(0.86))
+                .activityBackgroundTint(Color(hex: 0x14120F).opacity(0.92))
                 .activitySystemActionForegroundColor(Palette.streak)
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    ExpandedLeading(context: context)
+                    StreakBadge(context: context)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    ExpandedTrailing(context: context)
+                    CountdownBadge(context: context)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ExpandedBottom(context: context)
+                    MealTrack(context: context, compact: false)
                 }
             } compactLeading: {
-                Image(systemName: iconName(context))
-                    .foregroundStyle(Palette.streak)
+                // A filling ring rather than a flat glyph: the compact island is
+                // four points of information wide, and a ring spends them on
+                // progress instead of decoration.
+                MealRing(context: context, lineWidth: 3)
+                    .frame(width: 20, height: 20)
             } compactTrailing: {
-                // Once complete there's nothing to count down to, so the island
-                // shows the achieved state instead of a redundant timer.
-                if isComplete(context) {
+                if context.attributes.isComplete(context.state) {
                     Image(systemName: "checkmark")
                         .foregroundStyle(Palette.positive)
                 } else {
                     Text(timerInterval: Date()...context.attributes.deadline, countsDown: true)
                         .monospacedDigit()
-                        .frame(maxWidth: 52)
+                        .frame(maxWidth: 50)
                         .multilineTextAlignment(.trailing)
-                        .foregroundStyle(Palette.streak)
+                        .foregroundStyle(tint(context))
                 }
             } minimal: {
-                Image(systemName: iconName(context))
-                    .foregroundStyle(isComplete(context) ? Palette.positive : Palette.streak)
+                MealRing(context: context, lineWidth: 3)
+                    .frame(width: 20, height: 20)
             }
-            // Tapping anywhere opens the app to log the missing meal.
             .widgetURL(URL(string: "vessel://log/food"))
-            .keylineTint(Palette.streak)
+            .keylineTint(tint(context))
         }
     }
 
-    private func isComplete(_ context: ActivityViewContext<StreakActivityAttributes>) -> Bool {
-        context.attributes.isComplete(context.state)
-    }
-
-    private func iconName(_ context: ActivityViewContext<StreakActivityAttributes>) -> String {
-        isComplete(context) ? "checkmark.circle.fill" : "flame.fill"
+    private func tint(_ context: ActivityViewContext<StreakActivityAttributes>) -> Color {
+        context.attributes.isComplete(context.state) ? Palette.positive : Palette.streak
     }
 }
 
@@ -70,174 +71,213 @@ struct StreakLiveActivity: Widget {
 private struct LockScreenView: View {
     let context: ActivityViewContext<StreakActivityAttributes>
 
-    private var remaining: Int { context.attributes.remaining(for: context.state) }
     private var isComplete: Bool { context.attributes.isComplete(context.state) }
+    private var tint: Color { isComplete ? Palette.positive : Palette.streak }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
-            ZStack {
-                MealPipsRing(
-                    logged: context.state.logged,
-                    required: context.attributes.required,
-                    tint: isComplete ? Palette.positive : Palette.streak
-                )
-                Image(systemName: isComplete ? "checkmark" : "flame.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(isComplete ? Palette.positive : Palette.streak)
-            }
-            .frame(width: 48, height: 48)
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(StreakActivityCopy.headline(
-                    logged: context.state.logged,
-                    required: context.attributes.required,
-                    streak: context.state.streakCount
-                ))
-                .font(.headline)
-                .foregroundStyle(.white)
-
-                Text(StreakActivityCopy.detail(
-                    logged: context.state.logged,
-                    required: context.attributes.required,
-                    nextSlot: context.state.nextSlotName
-                ))
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.75))
-            }
-
-            Spacer(minLength: 4)
-
-            if !isComplete {
-                VStack(spacing: 1) {
-                    Text(timerInterval: Date()...context.attributes.deadline, countsDown: true)
-                        .font(.system(.title3, design: .rounded, weight: .semibold))
-                        .monospacedDigit()
-                        .multilineTextAlignment(.trailing)
-                        .foregroundStyle(Palette.streak)
-                    Text("left")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.6))
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 14) {
+                ZStack {
+                    MealRing(context: context, lineWidth: 5)
+                    VStack(spacing: -2) {
+                        Text("\(context.state.streakCount)")
+                            .font(.system(size: 19, design: .rounded).weight(.bold))
+                            .monospacedDigit()
+                            .foregroundStyle(tint)
+                        Text("day")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
                 }
-                .frame(maxWidth: 88)
+                .frame(width: 54, height: 54)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(StreakActivityCopy.headline(
+                        logged: context.state.logged,
+                        required: context.attributes.required,
+                        streak: context.state.streakCount
+                    ))
+                    .font(.headline)
+                    .foregroundStyle(.white)
+
+                    Text(StreakActivityCopy.detail(
+                        logged: context.state.logged,
+                        required: context.attributes.required,
+                        nextSlot: context.state.nextSlotName
+                    ))
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .lineLimit(2)
+                }
+
+                Spacer(minLength: 4)
+
+                if !isComplete {
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text(timerInterval: Date()...context.attributes.deadline, countsDown: true)
+                            .font(.system(size: 22, design: .rounded).weight(.semibold))
+                            .monospacedDigit()
+                            .multilineTextAlignment(.trailing)
+                            .foregroundStyle(tint)
+                        Text("left")
+                            .font(.caption2)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    .frame(maxWidth: 92)
+                }
             }
+
+            MealTrack(context: context, compact: false)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 14)
     }
 }
 
 // MARK: - Dynamic Island regions
 
-private struct ExpandedLeading: View {
+private struct StreakBadge: View {
     let context: ActivityViewContext<StreakActivityAttributes>
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 1) {
-            HStack(spacing: 4) {
-                Image(systemName: "flame.fill")
+        HStack(spacing: 6) {
+            Image(systemName: "flame.fill")
+                .font(.system(size: 17))
+                .foregroundStyle(
+                    // A two-stop gradient reads as a flame rather than a
+                    // flame-shaped block of orange.
+                    LinearGradient(
+                        colors: [Palette.streak, Color(hex: 0xE8562E)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+            VStack(alignment: .leading, spacing: -2) {
                 Text("\(context.state.streakCount)")
+                    .font(.system(size: 20, design: .rounded).weight(.bold))
                     .monospacedDigit()
+                    .foregroundStyle(.white)
+                Text(context.state.streakCount == 1 ? "day" : "days")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.5))
             }
-            .font(.system(.title3, design: .rounded, weight: .bold))
-            .foregroundStyle(Palette.streak)
-
-            Text(context.state.streakCount == 1 ? "day" : "days")
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.6))
         }
         .padding(.leading, 4)
     }
 }
 
-private struct ExpandedTrailing: View {
+private struct CountdownBadge: View {
     let context: ActivityViewContext<StreakActivityAttributes>
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 1) {
+        VStack(alignment: .trailing, spacing: -1) {
             if context.attributes.isComplete(context.state) {
                 Image(systemName: "checkmark.circle.fill")
-                    .font(.title2)
+                    .font(.system(size: 24))
                     .foregroundStyle(Palette.positive)
             } else {
                 Text(timerInterval: Date()...context.attributes.deadline, countsDown: true)
-                    .font(.system(.title3, design: .rounded, weight: .semibold))
+                    .font(.system(size: 20, design: .rounded).weight(.semibold))
                     .monospacedDigit()
                     .multilineTextAlignment(.trailing)
                     .foregroundStyle(Palette.streak)
                 Text("until reset")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.white.opacity(0.5))
             }
         }
         .padding(.trailing, 4)
     }
 }
 
-private struct ExpandedBottom: View {
+// MARK: - Shared pieces
+
+/// The day drawn as its actual meals.
+///
+/// Each slot gets its own icon — sunrise, sun, moon — so a glance says *dinner
+/// is missing*, not *one of three is missing*. Anonymous pips force the reader
+/// to do that mapping themselves.
+private struct MealTrack: View {
     let context: ActivityViewContext<StreakActivityAttributes>
+    let compact: Bool
+
+    private var slots: [String] {
+        let planned = context.state.planSlots
+        // Older activities, or an unusual plan, may not carry slot names.
+        // Fall back to unnamed placeholders rather than drawing nothing.
+        guard !planned.isEmpty else {
+            return Array(repeating: "", count: max(1, context.attributes.required))
+        }
+        return planned
+    }
+
+    private var logged: Set<String> { Set(context.state.loggedSlots) }
 
     var body: some View {
-        VStack(spacing: 8) {
-            Text(StreakActivityCopy.detail(
-                logged: context.state.logged,
-                required: context.attributes.required,
-                nextSlot: context.state.nextSlotName
-            ))
-            .font(.subheadline)
-            .foregroundStyle(.white.opacity(0.75))
-            .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(spacing: 6) {
+            ForEach(Array(slots.enumerated()), id: \.offset) { index, slot in
+                let isDone = slot.isEmpty ? index < context.state.logged : logged.contains(slot)
 
-            MealPipsRow(
-                logged: context.state.logged,
-                required: context.attributes.required,
-                tint: context.attributes.isComplete(context.state) ? Palette.positive : Palette.streak
-            )
+                HStack(spacing: 5) {
+                    Image(systemName: slot.isEmpty
+                          ? (isDone ? "checkmark" : "circle")
+                          : StreakActivityAttributes.ContentState.symbol(forSlot: slot))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(isDone ? .white : .white.opacity(0.4))
+
+                    if !compact, !slot.isEmpty {
+                        Text(StreakActivityAttributes.ContentState.title(forSlot: slot))
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(isDone ? .white : .white.opacity(0.45))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule().fill(
+                        isDone
+                            ? AnyShapeStyle(LinearGradient(
+                                colors: [Palette.streak, Color(hex: 0xE8562E)],
+                                startPoint: .leading, endPoint: .trailing))
+                            : AnyShapeStyle(Color.white.opacity(0.12))
+                    )
+                )
+            }
         }
-        .padding(.top, 2)
+        .accessibilityElement()
+        .accessibilityLabel("Meals logged today")
+        .accessibilityValue("\(context.state.logged) of \(context.attributes.required)")
     }
 }
 
-// MARK: - Shared bits
+/// One segment per required meal, filled as they're logged.
+private struct MealRing: View {
+    let context: ActivityViewContext<StreakActivityAttributes>
+    let lineWidth: CGFloat
 
-/// One segment per required meal — the same discrete language as the ring in the
-/// app, so the island and the Today screen visibly describe the same thing.
-private struct MealPipsRing: View {
-    let logged: Int
-    let required: Int
-    let tint: Color
+    private var required: Int { max(1, context.attributes.required) }
+    private var logged: Int { context.state.logged }
+    private var isComplete: Bool { context.attributes.isComplete(context.state) }
+    private var tint: Color { isComplete ? Palette.positive : Palette.streak }
 
     var body: some View {
         ZStack {
-            ForEach(0..<max(1, required), id: \.self) { index in
-                let gap = min(0.05, 0.15 / Double(max(1, required)))
-                let start = Double(index) / Double(max(1, required)) + gap / 2
+            ForEach(0..<required, id: \.self) { index in
+                let gap = min(0.06, 0.18 / Double(required))
+                let start = Double(index) / Double(required) + gap / 2
                 Circle()
-                    .trim(from: start, to: start + (1.0 / Double(max(1, required))) - gap)
+                    .trim(from: start, to: start + (1.0 / Double(required)) - gap)
                     .stroke(
-                        index < logged ? tint : tint.opacity(0.22),
-                        style: StrokeStyle(lineWidth: 5, lineCap: .round)
+                        index < logged
+                            ? AnyShapeStyle(LinearGradient(
+                                colors: [tint, isComplete ? tint : Color(hex: 0xE8562E)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing))
+                            : AnyShapeStyle(tint.opacity(0.22)),
+                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
             }
         }
-    }
-}
-
-private struct MealPipsRow: View {
-    let logged: Int
-    let required: Int
-    let tint: Color
-
-    var body: some View {
-        HStack(spacing: 5) {
-            ForEach(0..<max(1, required), id: \.self) { index in
-                Capsule()
-                    .fill(index < logged ? tint : tint.opacity(0.22))
-                    .frame(height: 5)
-            }
-        }
-        .accessibilityElement()
-        .accessibilityLabel("Meals logged")
-        .accessibilityValue("\(logged) of \(required)")
     }
 }

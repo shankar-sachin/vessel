@@ -75,6 +75,8 @@ struct TodayScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Layout.xl) {
+                QuickLogPrompt { router.present(.quickLog) }
+
                 StreakCard(
                     streak: streak,
                     progress: today,
@@ -127,6 +129,43 @@ struct TodayScreen: View {
         sizeClass == .compact
             ? [GridItem(.flexible())]
             : [GridItem(.flexible(), spacing: Layout.lg), GridItem(.flexible())]
+    }
+}
+
+// MARK: - Quick log
+
+/// The app's front door: describe a meal in words.
+///
+/// Deliberately the first thing on the screen. Everything else here is a
+/// readout of what's already logged; this is the one control that adds to it,
+/// and burying it behind a tab would make the fastest path the least visible.
+private struct QuickLogPrompt: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: Layout.md) {
+                Image(systemName: "sparkles")
+                    .font(.body)
+                    .foregroundStyle(Palette.diet)
+                Text("Describe a meal…")
+                    .font(Typography.body)
+                    .foregroundStyle(Palette.inkTertiary)
+                Spacer()
+                Image(systemName: "arrow.up.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(Palette.diet.opacity(0.8))
+            }
+            .padding(.horizontal, Layout.lg)
+            .padding(.vertical, Layout.md)
+            .background(Palette.surface, in: Capsule())
+            .overlay(Capsule().strokeBorder(Palette.separator, lineWidth: 0.5))
+            .shadow(color: Color(hex: 0x3A2E20).opacity(0.05), radius: 6, y: 2)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Quick log")
+        .accessibilityHint("Describe a meal in your own words")
+        .accessibilityIdentifier("quickLogPrompt")
     }
 }
 

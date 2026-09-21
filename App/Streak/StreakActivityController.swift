@@ -62,7 +62,9 @@ final class StreakActivityController {
         let state = StreakActivityAttributes.ContentState(
             logged: progress.logged,
             streakCount: streak.current,
-            nextSlotName: nextSlotName(for: progress, plan: plan, now: now)
+            nextSlotName: nextSlotName(for: progress, plan: plan, now: now),
+            loggedSlots: progress.slotsLogged.map(\.rawValue),
+            planSlots: plan.qualifyingSlots.map(\.rawValue)
         )
 
         if progress.isQualified {
