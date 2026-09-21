@@ -97,45 +97,67 @@ public struct LiquidFill: View {
             // Waves flatten as the vessel approaches full — a nearly-full
             // container has little room to slosh, and a big wave at the brim
             // looks wrong. A splash temporarily overrides that calm.
-            let calm = 1.0 - (level * 0.55)
-            let baseAmplitude = min(canvasSize.height * 0.035, 9) * calm * (1 + splash * 2.4)
+            let calm = 1.0 - (level * 0.5)
+            let baseAmplitude = min(canvasSize.height * 0.030, 8) * calm * (1 + splash * 2.6)
             // Fresh liquid moves faster before it settles.
             let speed = 1.0 + splash * 1.8
 
+            // Three layers rather than two. The third is slow and long, so the
+            // surface drifts as well as ripples — two waves alone read as a
+            // repeating pattern once you watch for more than a few seconds.
+            let deep = wavePath(
+                in: canvasSize, surfaceY: surfaceY + baseAmplitude * 0.8,
+                amplitude: baseAmplitude * 0.45, wavelength: canvasSize.width * 2.1,
+                phase: time * 0.31 * speed + 2.7
+            )
+            let back = wavePath(
+                in: canvasSize, surfaceY: surfaceY + baseAmplitude * 0.35,
+                amplitude: baseAmplitude * 0.7, wavelength: canvasSize.width * 1.37,
+                phase: -time * 0.78 * speed + 1.2
+            )
             let front = wavePath(
                 in: canvasSize, surfaceY: surfaceY,
                 amplitude: baseAmplitude, wavelength: canvasSize.width * 0.85,
                 phase: time * 1.15 * speed
             )
-            let back = wavePath(
-                in: canvasSize, surfaceY: surfaceY + baseAmplitude * 0.35,
-                amplitude: baseAmplitude * 0.66, wavelength: canvasSize.width * 1.37,
-                phase: -time * 0.78 * speed + 1.2
-            )
 
-            // Back wave sits behind and dimmer, which creates depth in the liquid.
-            context.fill(back, with: .color(tint.opacity(0.42)))
+            // Back layers sit behind and dimmer, which gives the liquid depth
+            // instead of looking like one flat sheet.
+            context.fill(deep, with: .color(tint.opacity(0.28)))
+            context.fill(back, with: .color(tint.opacity(0.45)))
 
             context.fill(
                 front,
                 with: .linearGradient(
-                    Gradient(colors: [tint.opacity(0.95), tint.opacity(0.68)]),
+                    Gradient(stops: [
+                        .init(color: tint.opacity(0.98), location: 0),
+                        .init(color: tint.opacity(0.88), location: 0.35),
+                        .init(color: tint.opacity(0.62), location: 1)
+                    ]),
                     startPoint: CGPoint(x: 0, y: surfaceY),
                     endPoint: CGPoint(x: 0, y: canvasSize.height)
                 )
             )
 
-            // A bright hairline along the surface — the specular highlight that
-            // sells it as a liquid rather than a colored rectangle.
             if level > 0.001 {
+                let surface = wavePath(
+                    in: canvasSize, surfaceY: surfaceY,
+                    amplitude: baseAmplitude, wavelength: canvasSize.width * 0.85,
+                    phase: time * 1.15 * speed, surfaceOnly: true
+                )
+
+                // A soft band just under the surface, then a bright hairline on
+                // it. Together they read as a meniscus — the single detail that
+                // most makes this look like liquid rather than a coloured shape.
                 context.stroke(
-                    wavePath(
-                        in: canvasSize, surfaceY: surfaceY,
-                        amplitude: baseAmplitude, wavelength: canvasSize.width * 0.85,
-                        phase: time * 1.15 * speed, surfaceOnly: true
-                    ),
-                    with: .color(.white.opacity(0.5 + splash * 0.3)),
-                    lineWidth: 1.2
+                    surface,
+                    with: .color(.white.opacity(0.16 + splash * 0.12)),
+                    lineWidth: 5
+                )
+                context.stroke(
+                    surface,
+                    with: .color(.white.opacity(0.62 + splash * 0.28)),
+                    lineWidth: 1.4
                 )
             }
         }

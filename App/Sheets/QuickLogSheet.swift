@@ -21,6 +21,8 @@ struct QuickLogSheet: View {
     @State private var resolved: [EntryResolver.ResolvedFood] = []
     @State private var isParsing = false
     @State private var voiceError: String?
+    /// Variant picked by hand, keyed by the resolved food it belongs to.
+    @State private var variantChoices: [UUID: FoodRecord] = [:]
     @StateObject private var voice = VoiceTranscriber()
     @FocusState private var inputFocused: Bool
 
@@ -147,8 +149,13 @@ struct QuickLogSheet: View {
 
         if !resolved.isEmpty {
             Section("Foods") {
-                ForEach(resolved) { food in
-                    ResolvedFoodRow(resolved: food)
+                ForEach(Array(resolved.enumerated()), id: \.element.id) { index, food in
+                    ResolvedFoodRow(
+                        resolved: food,
+                        chosenVariant: variantChoices[food.id],
+                        onChooseVariant: { variantChoices[food.id] = $0 },
+                        onAddCompanion: { term in Task { await addCompanion(term) } }
+                    )
                 }
             }
         }
@@ -217,7 +224,31 @@ struct QuickLogSheet: View {
         withAnimation(Motion.quick) {
             parsed = result.0
             resolved = result.1
+            // A fresh parse invalidates hand-picked variants: the foods it
+            // refers to no longer exist.
+            variantChoices = [:]
         }
+    }
+
+    /// Appends a suggested companion to what the user typed, so it goes back
+    /// through the same parser rather than being bolted on afterwards.
+    private func addCompanion(_ term: String) async {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        input = trimmed.isEmpty ? term : "\(trimmed) and \(term)"
+    }
+
+    /// Ids and names of the foods just saved, for pairing.
+    private func entryFoodIdentities() -> [(id: String, name: String)] {
+        resolved.compactMap { item in
+            guard let food = effectiveFood(for: item) else { return nil }
+            return (food.id, food.name)
+        }
+    }
+
+    /// The food actually saved for a row: the hand-picked variant if there is
+    /// one, otherwise whatever the parser resolved.
+    private func effectiveFood(for item: EntryResolver.ResolvedFood) -> FoodRecord? {
+        variantChoices[item.id] ?? item.food
     }
 
     // MARK: - Voice
@@ -274,6 +305,14 @@ struct QuickLogSheet: View {
             saveJournal(parsed)
         }
 
+        // Learn what this person eats together, so "cereal" can eventually
+        // offer their milk because they keep having it — not because a table
+        // said they would.
+        PairingStore.record(
+            foodIDs: entryFoodIdentities(),
+            in: context
+        )
+
         try? context.save()
         Task { await StreakCoordinator.refresh(context: context) }
         dismiss()
@@ -289,15 +328,19 @@ struct QuickLogSheet: View {
             parseConfidence: parsed.confidence
         )
         context.insert(entry)
-        entry.items = resolved.map { food in
+        entry.items = resolved.map { resolvedFood in
+            let chosen = effectiveFood(for: resolvedFood)
+            let grams = resolvedFood.grams ?? chosen?.defaultPortion?.grams ?? 100
             let item = FoodItem(
-                foodID: food.food?.id,
-                displayName: food.food?.name ?? food.phrase.capitalized,
-                quantity: food.quantity,
-                unit: food.unit,
-                grams: food.grams,
-                nutrients: food.nutrients,
-                tags: food.food?.tags ?? []
+                foodID: chosen?.id,
+                displayName: chosen?.name ?? resolvedFood.phrase.capitalized,
+                quantity: resolvedFood.quantity,
+                unit: resolvedFood.unit,
+                grams: grams,
+                // Recomputed from the chosen variant: picking skimmed milk has
+                // to change the calories, not just the label.
+                nutrients: chosen?.nutrients(forGrams: grams) ?? resolvedFood.nutrients,
+                tags: chosen?.tags ?? []
             )
             context.insert(item)
             return item
@@ -369,17 +412,28 @@ struct QuickLogSheet: View {
 /// One resolved food, showing what it matched and how sure that is.
 private struct ResolvedFoodRow: View {
     let resolved: EntryResolver.ResolvedFood
+    let chosenVariant: FoodRecord?
+    let onChooseVariant: (FoodRecord) -> Void
+    let onAddCompanion: (String) -> Void
+
+    private var food: FoodRecord? { chosenVariant ?? resolved.food }
+
+    private var displayedNutrients: Nutrients {
+        guard let food, let grams = resolved.grams else { return resolved.nutrients }
+        return food.nutrients(forGrams: grams)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(alignment: .firstTextBaseline) {
-                Text(resolved.food?.name ?? resolved.phrase.capitalized)
+                Text(food?.name ?? resolved.phrase.capitalized)
                     .font(Typography.body)
                     .foregroundStyle(Palette.ink)
                 Spacer(minLength: Layout.xs)
-                Text("\(Int(resolved.nutrients.kilocalories)) kcal")
+                Text("\(Int(displayedNutrients.kilocalories)) kcal")
                     .font(Typography.numeric)
                     .foregroundStyle(Palette.inkSecondary)
+                    .contentTransition(.numericText(value: displayedNutrients.kilocalories))
             }
 
             HStack(spacing: Layout.xs) {
@@ -401,6 +455,54 @@ private struct ResolvedFoodRow: View {
                       systemImage: "exclamationmark.triangle")
                     .font(Typography.caption)
                     .foregroundStyle(Palette.caution)
+            }
+
+            // "Milk" spans 34 to 61 kcal per 100 g. Picking one silently would
+            // bury a difference big enough to matter, so it gets asked.
+            if resolved.needsChoice {
+                VStack(alignment: .leading, spacing: Layout.xs) {
+                    Text("Which \(resolved.phrase.lowercased())?")
+                        .font(Typography.caption)
+                        .foregroundStyle(Palette.inkSecondary)
+
+                    FlowLayout(spacing: Layout.xs) {
+                        ForEach(resolved.variants) { variant in
+                            let isChosen = (chosenVariant ?? resolved.food)?.id == variant.id
+                            Button {
+                                onChooseVariant(variant)
+                            } label: {
+                                Text(FoodVariants.distinguishingLabel(
+                                    for: variant, term: resolved.phrase
+                                ))
+                                .font(Typography.captionEmphasis)
+                                .foregroundStyle(isChosen ? .white : Palette.diet)
+                                .padding(.horizontal, Layout.sm)
+                                .padding(.vertical, 5)
+                                .background(
+                                    isChosen ? Palette.diet : Palette.diet.opacity(0.12),
+                                    in: Capsule()
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .padding(.top, Layout.xs)
+            }
+
+            // Offered, never added: a suggestion you can ignore is helpful,
+            // calories you didn't log are not.
+            if let companion = resolved.suggestedCompanion {
+                Button {
+                    onAddCompanion(companion.searchTerm)
+                } label: {
+                    Label("Add \(companion.searchTerm)", systemImage: "plus.circle")
+                        .font(Typography.caption)
+                        .foregroundStyle(Palette.diet)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, Layout.xs)
+                .accessibilityHint(companion.note)
             }
         }
         .padding(.vertical, 2)

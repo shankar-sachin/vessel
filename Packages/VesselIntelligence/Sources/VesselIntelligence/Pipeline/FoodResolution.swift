@@ -12,10 +12,16 @@ public struct EntryResolver: Sendable {
 
     private let search: FoodSearch
     private let portions: PortionResolver
+    private let accompaniments: Accompaniments
 
-    public init(search: FoodSearch = FoodSearch(), portions: PortionResolver = PortionResolver()) {
+    public init(
+        search: FoodSearch = FoodSearch(),
+        portions: PortionResolver = PortionResolver(),
+        accompaniments: Accompaniments = Accompaniments()
+    ) {
         self.search = search
         self.portions = portions
+        self.accompaniments = accompaniments
     }
 
     /// A parsed food matched against the database.
@@ -36,18 +42,28 @@ public struct EntryResolver: Sendable {
         /// True when the weight was inferred rather than measured.
         public let isEstimate: Bool
 
+        /// Variants worth choosing between, when the word was generic enough
+        /// that picking one silently would hide a real difference — "milk"
+        /// spans 34 to 61 kcal per 100 g.
+        public let variants: [FoodRecord]
+
+        /// A food this one is usually eaten with, offered rather than added.
+        public let suggestedCompanion: (searchTerm: String, note: String)?
+
         public var isUnmatched: Bool { food == nil }
+        public var needsChoice: Bool { !variants.isEmpty }
     }
 
     /// Resolves every food in a parsed entry.
     public func resolve(_ entry: ParsedEntry) -> [ResolvedFood] {
-        entry.foods
-            // A negated food is something the user said they *didn't* have.
-            .filter { !$0.isNegated }
-            .map(resolve)
+        let wanted = entry.foods.filter { !$0.isNegated }
+        // Companion suggestions need to know what else is in the meal, so the
+        // milk isn't offered twice when it's already there.
+        let names = wanted.map(\.phrase)
+        return wanted.map { resolve($0, alongside: names) }
     }
 
-    public func resolve(_ parsed: ParsedFood) -> ResolvedFood {
+    public func resolve(_ parsed: ParsedFood, alongside others: [String] = []) -> ResolvedFood {
         // Search on the food words plus any preparation, since "grilled
         // chicken" and "fried chicken" are different rows with different fat.
         let query = (parsed.preparation + [parsed.phrase]).joined(separator: " ")
@@ -63,7 +79,9 @@ public struct EntryResolver: Sendable {
                 grams: nil,
                 nutrients: .zero,
                 confidence: 0,
-                isEstimate: true
+                isEstimate: true,
+                variants: [],
+                suggestedCompanion: nil
             )
         }
 
@@ -81,6 +99,10 @@ public struct EntryResolver: Sendable {
         // A close second suggests the top hit is a coin flip.
         if matches.count > 1, matches[1].score > best.score * 0.92 { confidence *= 0.85 }
 
+        let variants = FoodVariants.options(query: parsed.phrase, matches: matches)
+        // An unanswered "which one?" is itself a reason to be less sure.
+        if !variants.isEmpty { confidence *= 0.8 }
+
         return ResolvedFood(
             phrase: parsed.phrase,
             food: best.food,
@@ -90,7 +112,12 @@ public struct EntryResolver: Sendable {
             grams: grams,
             nutrients: best.food.nutrients(forGrams: grams),
             confidence: min(1, confidence),
-            isEstimate: resolution?.isEstimate ?? true
+            isEstimate: resolution?.isEstimate ?? true,
+            variants: variants,
+            suggestedCompanion: accompaniments.suggestion(
+                for: best.food.name,
+                alreadyLogged: others
+            )
         )
     }
 

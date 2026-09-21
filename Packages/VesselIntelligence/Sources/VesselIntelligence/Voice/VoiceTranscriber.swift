@@ -32,6 +32,7 @@ public final class VoiceTranscriber: ObservableObject {
         case recognizerUnavailable
         case onDeviceUnavailable
         case audioSessionFailed
+        case noMicrophone
         case noSpeechDetected
 
         /// Plain language, and where it can be fixed.
@@ -47,6 +48,8 @@ public final class VoiceTranscriber: ObservableObject {
                 return "This device can't transcribe without sending audio to Apple, so Vessel won't use it. You can still type."
             case .audioSessionFailed:
                 return "Vessel couldn't start recording. Another app may be using the microphone."
+            case .noMicrophone:
+                return "No microphone is available on this device, so Vessel can't listen. You can still type."
             case .noSpeechDetected:
                 return "Didn't catch anything — try again a little closer."
             }
@@ -135,6 +138,18 @@ public final class VoiceTranscriber: ObservableObject {
 
         let input = audioEngine.inputNode
         let format = input.outputFormat(forBus: 0)
+
+        // `installTap` *traps* on an invalid format rather than throwing, so
+        // this has to be checked rather than caught. A simulator with no audio
+        // input, and a device whose microphone is held by another app, both
+        // report a zero-channel, zero-rate format here — installing a tap with
+        // it crashes the app outright, which is what was happening.
+        guard format.sampleRate > 0, format.channelCount > 0 else {
+            teardown()
+            state = .failed(.noMicrophone)
+            return
+        }
+
         input.removeTap(onBus: 0)
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
             request.append(buffer)
@@ -146,6 +161,9 @@ public final class VoiceTranscriber: ObservableObject {
         do {
             try audioEngine.start()
         } catch {
+            // Leave nothing running: a half-started engine keeps the audio
+            // session active and blocks the next attempt.
+            teardown()
             state = .failed(.audioSessionFailed)
             return
         }
@@ -189,11 +207,14 @@ public final class VoiceTranscriber: ObservableObject {
         state = text.isEmpty ? .failed(.noSpeechDetected) : .finished(text)
     }
 
+    /// Safe to call at any point, including before anything started.
     private func teardown() {
         task?.cancel()
         task = nil
         request = nil
         if audioEngine.isRunning { audioEngine.stop() }
+        // Removing a tap that was never installed is harmless; removing one
+        // that was is essential, or the next start installs a second.
         audioEngine.inputNode.removeTap(onBus: 0)
         audioLevel = 0
         try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)

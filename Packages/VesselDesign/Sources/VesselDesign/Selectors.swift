@@ -229,22 +229,36 @@ public struct FlowLayout: SwiftUI.Layout {
     }
 
     public func sizeThatFits(proposal: ProposedViewSize, subviews: SwiftUI.LayoutSubviews, cache: inout ()) -> CGSize {
+        // A nil width means "however much you like". Falling back to infinity
+        // there lets every child onto one notional row, which is what we want
+        // for measuring but not for placing.
         let maxWidth = proposal.width ?? .infinity
         let rows = layout(subviews: subviews, maxWidth: maxWidth)
         let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, rows.count - 1))
-        return CGSize(width: maxWidth == .infinity ? rows.map(\.width).max() ?? 0 : maxWidth, height: height)
+        let width = maxWidth.isFinite ? maxWidth : (rows.map(\.width).max() ?? 0)
+        return CGSize(width: width, height: height)
     }
 
     public func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: SwiftUI.LayoutSubviews, cache: inout ()) {
         let rows = layout(subviews: subviews, maxWidth: bounds.width)
         var y = bounds.minY
+
         for row in rows {
             var x = bounds.minX
             for index in row.indices {
                 let size = subviews[index].sizeThatFits(.unspecified)
+
+                // Placed with `.unspecified` rather than with the measured
+                // size. Handing back a CGSize *forces* the child into exactly
+                // those bounds, so a width that's even slightly short makes the
+                // label wrap to several lines and the chip grow into a tall
+                // capsule with its text clipped away. `.unspecified` lets each
+                // chip take its natural single-line size, which is the whole
+                // point of a flow layout.
                 subviews[index].place(
                     at: CGPoint(x: x, y: y + (row.height - size.height) / 2),
-                    proposal: ProposedViewSize(size)
+                    anchor: .topLeading,
+                    proposal: .unspecified
                 )
                 x += size.width + spacing
             }
@@ -263,7 +277,10 @@ public struct FlowLayout: SwiftUI.Layout {
         var current = Row()
 
         for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.unspecified)
+            var size = subviews[index].sizeThatFits(.unspecified)
+            // A chip wider than the container would otherwise start an endless
+            // sequence of one-item rows.
+            if maxWidth.isFinite { size.width = min(size.width, maxWidth) }
             let needed = current.indices.isEmpty ? size.width : current.width + spacing + size.width
 
             if needed > maxWidth, !current.indices.isEmpty {

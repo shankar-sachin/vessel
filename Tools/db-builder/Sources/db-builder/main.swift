@@ -105,5 +105,7 @@ Wrote \(outputURL.lastPathComponent)
   with portions \(withPortions)
   with density \(withDensity)
   staples      \(deduplicated.filter(\.isStaple).count)
+  ambiguous    \(Statistics.headNouns(in: deduplicated).filter(\.isAmbiguous).count) head nouns
+  companions   \(Statistics.accompaniments(in: deduplicated).count) learned pairs
   size         \(String(format: "%.1f MB", Double(size) / 1_048_576))
 """)

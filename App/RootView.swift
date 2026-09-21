@@ -23,6 +23,17 @@ struct RootView: View {
             }
         }
         .background(Palette.ground)
+        // Above the tab bar on every screen: logging shouldn't depend on which
+        // tab you happen to be on.
+        .overlay(alignment: .bottomTrailing) {
+            FloatingLogButton(tint: Palette.diet) {
+                router.present(.quickLog)
+            }
+            .padding(.trailing, Layout.lg)
+            // Sits just clear of the tab bar rather than floating well above
+            // it — close enough to reach with a thumb without covering it.
+            .padding(.bottom, sizeClass == .compact ? 68 : Layout.lg)
+        }
         .sheetDestinations()
     }
 }

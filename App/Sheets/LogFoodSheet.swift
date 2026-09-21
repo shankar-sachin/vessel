@@ -137,6 +137,14 @@ struct LogFoodSheet: View {
             return item
         }
 
+        PairingStore.record(
+            foodIDs: entry.resolvedItems.compactMap { item in
+                guard let id = item.foodID else { return nil }
+                return (id, item.displayName)
+            },
+            in: context
+        )
+
         try? context.save()
 
         // A new meal can complete the day's requirement, which has to reach the

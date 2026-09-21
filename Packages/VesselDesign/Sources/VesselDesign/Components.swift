@@ -132,3 +132,60 @@ public struct EmptyStateView: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+/// The floating button that logs from anywhere.
+///
+/// Every screen in Vessel is a readout of what's already recorded; this is the
+/// one control that adds to it. Keeping it fixed above the content means the
+/// shortest path to logging is the same everywhere, instead of depending on
+/// which tab you happen to be looking at.
+public struct FloatingLogButton: View {
+
+    private let tint: Color
+    private let action: () -> Void
+
+    @State private var isPressed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    public init(tint: Color = Palette.diet, action: @escaping () -> Void) {
+        self.tint = tint
+        self.action = action
+    }
+
+    public var body: some View {
+        Button(action: action) {
+            Image(systemName: "plus")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 58, height: 58)
+                .background(
+                    Circle().fill(
+                        LinearGradient(
+                            colors: [tint, Color(hex: 0xA8461F)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                )
+                // A tinted shadow rather than a neutral one, so the button
+                // looks lit from within instead of pasted on.
+                .shadow(color: tint.opacity(0.45), radius: 14, y: 6)
+                .shadow(color: Color(hex: 0x3A2E20).opacity(0.18), radius: 4, y: 2)
+                .scaleEffect(isPressed ? 0.92 : 1)
+        }
+        .buttonStyle(.plain)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard !isPressed else { return }
+                    withAnimation(reduceMotion ? nil : Motion.quick) { isPressed = true }
+                }
+                .onEnded { _ in
+                    withAnimation(reduceMotion ? nil : Motion.quick) { isPressed = false }
+                }
+        )
+        .accessibilityLabel("Log something")
+        .accessibilityHint("Describe a meal, a drink, or how you're feeling")
+        .accessibilityIdentifier("floatingLogButton")
+    }
+}

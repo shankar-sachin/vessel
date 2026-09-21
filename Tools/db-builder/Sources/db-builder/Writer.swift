@@ -33,6 +33,7 @@ struct DatabaseWriter {
 
         try exec(db, "BEGIN TRANSACTION")
         try insertFoods(db, foods)
+        try insertStatistics(db, foods)
         try exec(db, "COMMIT")
 
         // Build the search index after the rows land — far faster than
@@ -100,6 +101,23 @@ struct DatabaseWriter {
             content_rowid='rowid',
             prefix='2 3 4'
         );
+
+        -- Derived from the corpus at build time rather than hand-written.
+        -- See Statistics.swift for why.
+        CREATE TABLE head_nouns (
+            head         TEXT PRIMARY KEY,
+            variant_count INTEGER NOT NULL,
+            kcal_min     REAL NOT NULL,
+            kcal_max     REAL NOT NULL,
+            is_ambiguous INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE accompaniments (
+            head        TEXT NOT NULL,
+            companion   TEXT NOT NULL,
+            occurrences INTEGER NOT NULL
+        );
+        CREATE INDEX idx_accompaniments_head ON accompaniments(head);
 
         CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
         """
@@ -187,6 +205,40 @@ struct DatabaseWriter {
                 ('built_at', '\(ISO8601DateFormatter().string(from: Date()))'),
                 ('food_count', '\(foods.count)');
             """)
+    }
+
+    /// Writes the derived ambiguity and co-occurrence tables.
+    private func insertStatistics(_ db: OpaquePointer, _ foods: [FoodRow]) throws {
+        var headStatement: OpaquePointer?
+        sqlite3_prepare_v2(db, """
+            INSERT INTO head_nouns (head, variant_count, kcal_min, kcal_max, is_ambiguous)
+            VALUES (?1,?2,?3,?4,?5)
+            """, -1, &headStatement, nil)
+        defer { sqlite3_finalize(headStatement) }
+
+        for head in Statistics.headNouns(in: foods) {
+            sqlite3_reset(headStatement)
+            bind(headStatement, 1, head.head)
+            sqlite3_bind_int(headStatement, 2, Int32(head.count))
+            sqlite3_bind_double(headStatement, 3, head.minimumEnergy)
+            sqlite3_bind_double(headStatement, 4, head.maximumEnergy)
+            sqlite3_bind_int(headStatement, 5, head.isAmbiguous ? 1 : 0)
+            sqlite3_step(headStatement)
+        }
+
+        var companionStatement: OpaquePointer?
+        sqlite3_prepare_v2(db, """
+            INSERT INTO accompaniments (head, companion, occurrences) VALUES (?1,?2,?3)
+            """, -1, &companionStatement, nil)
+        defer { sqlite3_finalize(companionStatement) }
+
+        for pair in Statistics.accompaniments(in: foods) {
+            sqlite3_reset(companionStatement)
+            bind(companionStatement, 1, pair.head)
+            bind(companionStatement, 2, pair.companion)
+            sqlite3_bind_int(companionStatement, 3, Int32(pair.occurrences))
+            sqlite3_step(companionStatement)
+        }
     }
 
     private func bind(_ statement: OpaquePointer?, _ index: Int32, _ value: String) {

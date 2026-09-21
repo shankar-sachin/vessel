@@ -305,3 +305,80 @@ struct DefaultPortionTests {
         }
     }
 }
+
+@Suite("Variants and accompaniments")
+struct VariantTests {
+
+    private let search = FoodSearch()
+    private let accompaniments = Accompaniments()
+
+    @Test("Ambiguity is derived from the corpus, not from a list")
+    func ambiguityIsDerived() {
+        // "Milk" spans 32 to 496 kcal per 100 g across 64 rows, so it asks.
+        // "Banana" spans two rows, so it doesn't. Neither fact is written down
+        // anywhere — both are computed from the data at build time, which is
+        // why this also works for the other four hundred ambiguous heads
+        // nobody enumerated.
+        #expect(FoodDatabase.shared.isAmbiguousHead("milk"))
+        #expect(FoodDatabase.shared.isAmbiguousHead("bread"))
+        #expect(!FoodDatabase.shared.isAmbiguousHead("banana"))
+        #expect(!FoodDatabase.shared.isAmbiguousHead("avocado"))
+    }
+
+    @Test("A bare 'milk' offers its variants")
+    func milkOffersVariants() {
+        let matches = search.search("milk", limit: 8)
+        let options = FoodVariants.options(query: "milk", matches: matches)
+        #expect(options.count >= 2, "expected milk variants, got \(options.map(\.name))")
+
+        // And they must actually differ in a way worth asking about.
+        let energies = options.map(\.nutrientsPer100g.kilocalories)
+        if let low = energies.min(), let high = energies.max(), high > 0 {
+            #expect((high - low) / high > 0.15, "variants that barely differ aren't worth a tap")
+        }
+    }
+
+    @Test("A specific phrasing doesn't ask")
+    func specificPhrasingIsNotAmbiguous() {
+        // "whole milk" already answered the question.
+        let matches = search.search("whole milk", limit: 8)
+        #expect(FoodVariants.options(query: "whole milk", matches: matches).isEmpty)
+    }
+
+    @Test("Variant labels drop the repeated head noun")
+    func labelsAreDistinguishing() throws {
+        let matches = search.search("milk", limit: 8)
+        let options = FoodVariants.options(query: "milk", matches: matches)
+        let first = try #require(options.first)
+        let label = FoodVariants.distinguishingLabel(for: first, term: "milk")
+        // A picker of buttons all reading "Milk, …" would be noise.
+        #expect(!label.isEmpty)
+        #expect(label.lowercased() != first.name.lowercased())
+    }
+
+    @Test("Companions are mined from the corpus")
+    func companionsAreMined() throws {
+        // Pasta with sauce is recorded dozens of times in FoodData Central's
+        // survey composites. Nobody wrote that down here.
+        let pasta = try #require(FoodDatabase.shared.companion(forHead: "pasta"))
+        #expect(pasta.occurrences >= 2)
+        #expect(!pasta.companion.isEmpty)
+    }
+
+    @Test("A companion already in the meal isn't offered again")
+    func suggestionRespectsWhatsThere() throws {
+        guard let mined = FoodDatabase.shared.companion(forHead: "pasta") else { return }
+        let suggestion = accompaniments.suggestion(
+            for: "Pasta, cooked",
+            alreadyLogged: [mined.companion]
+        )
+        #expect(suggestion == nil, "offering what's already logged is noise")
+    }
+
+    @Test("Foods with nothing recorded alongside them suggest nothing")
+    func noSuggestionWithoutEvidence() {
+        // The honest outcome when the data doesn't support a guess — which is
+        // exactly what it says about cereal and milk.
+        #expect(accompaniments.suggestion(for: "Banana, raw") == nil)
+    }
+}

@@ -13,7 +13,8 @@ public enum VesselStore {
         JournalEntry.self,
         SymptomEntry.self,
         UserProfile.self,
-        LearnedAlias.self
+        LearnedAlias.self,
+        FoodPairing.self
     ])
 
     /// The app's on-disk container.

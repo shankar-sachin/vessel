@@ -105,6 +105,44 @@ public final class FoodDatabase: @unchecked Sendable {
         return results
     }
 
+    // MARK: - Derived statistics
+
+    /// Whether naming this food without qualification leaves a real question
+    /// open. Computed at build time from how far its variants' calories spread.
+    public func isAmbiguousHead(_ head: String) -> Bool {
+        lock.lock(); defer { lock.unlock() }
+        guard let handle else { return false }
+
+        var statement: OpaquePointer?
+        defer { sqlite3_finalize(statement) }
+        guard sqlite3_prepare_v2(
+            handle, "SELECT is_ambiguous FROM head_nouns WHERE head = ?1 LIMIT 1", -1, &statement, nil
+        ) == SQLITE_OK else { return false }
+        bind(statement, 1, head.lowercased())
+
+        guard sqlite3_step(statement) == SQLITE_ROW else { return false }
+        return sqlite3_column_int(statement, 0) == 1
+    }
+
+    /// The food most often recorded alongside this one in the corpus.
+    public func companion(forHead head: String) -> (companion: String, occurrences: Int)? {
+        lock.lock(); defer { lock.unlock() }
+        guard let handle else { return nil }
+
+        var statement: OpaquePointer?
+        defer { sqlite3_finalize(statement) }
+        guard sqlite3_prepare_v2(handle, """
+            SELECT companion, occurrences FROM accompaniments
+            WHERE head = ?1 ORDER BY occurrences DESC LIMIT 1
+            """, -1, &statement, nil) == SQLITE_OK else { return nil }
+        bind(statement, 1, head.lowercased())
+
+        guard sqlite3_step(statement) == SQLITE_ROW,
+              let pointer = sqlite3_column_text(statement, 0)
+        else { return nil }
+        return (String(cString: pointer), Int(sqlite3_column_int(statement, 1)))
+    }
+
     // MARK: - Search
 
     /// Candidate lookup by full-text match.

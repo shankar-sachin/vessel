@@ -211,3 +211,78 @@ struct ArchiveErrorTests {
         }
     }
 }
+
+@Suite("Learned food pairings")
+@MainActor
+struct PairingTests {
+
+    private func identities(_ names: [String]) -> [(id: String, name: String)] {
+        names.map { (id: "fdc:\($0.hashValue)", name: $0) }
+    }
+
+    @Test("A single food records no pairing")
+    func singleFoodIsNoPair() throws {
+        let context = try makeContext()
+        PairingStore.record(foodIDs: identities(["Cereal, O's"]), in: context)
+        try context.save()
+        #expect(try context.fetchCount(FetchDescriptor<FoodPairing>()) == 0)
+    }
+
+    @Test("Eating two foods together records both directions")
+    func pairsAreSymmetric() throws {
+        let context = try makeContext()
+        PairingStore.record(foodIDs: identities(["Cereal", "Milk"]), in: context)
+        try context.save()
+
+        // Either food should be able to suggest the other.
+        #expect(try context.fetchCount(FetchDescriptor<FoodPairing>()) == 2)
+    }
+
+    @Test("A habit needs repetition before it's acted on")
+    func habitsNeedEvidence() throws {
+        let context = try makeContext()
+        let meal = identities(["Cereal", "Milk"])
+        let cerealID = meal[0].id
+
+        // Once is a coincidence.
+        PairingStore.record(foodIDs: meal, in: context)
+        try context.save()
+        #expect(PairingStore.companion(for: cerealID, in: context) == nil)
+
+        // Three times is a habit.
+        PairingStore.record(foodIDs: meal, in: context)
+        PairingStore.record(foodIDs: meal, in: context)
+        try context.save()
+
+        let companion = try #require(PairingStore.companion(for: cerealID, in: context))
+        #expect(companion.companionName == "Milk")
+        #expect(companion.occurrences == 3)
+    }
+
+    @Test("Declining a suggestion outweighs the counting")
+    func dismissalsWin() throws {
+        let context = try makeContext()
+        let meal = identities(["Cereal", "Milk"])
+        for _ in 0..<4 { PairingStore.record(foodIDs: meal, in: context) }
+        try context.save()
+
+        let pairing = try #require(PairingStore.companion(for: meal[0].id, in: context))
+        // Being told twice is better evidence than counting four times.
+        PairingStore.dismiss(pairing, in: context)
+        PairingStore.dismiss(pairing, in: context)
+
+        #expect(PairingStore.companion(for: meal[0].id, in: context) == nil)
+    }
+
+    @Test("A companion already in the meal isn't suggested")
+    func excludesWhatsPresent() throws {
+        let context = try makeContext()
+        let meal = identities(["Cereal", "Milk"])
+        for _ in 0..<3 { PairingStore.record(foodIDs: meal, in: context) }
+        try context.save()
+
+        #expect(PairingStore.companion(
+            for: meal[0].id, excluding: [meal[1].id], in: context
+        ) == nil)
+    }
+}

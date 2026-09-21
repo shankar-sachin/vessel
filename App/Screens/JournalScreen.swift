@@ -50,7 +50,8 @@ struct JournalScreen: View {
                         }
                     }
                     .screenGutter()
-                    .padding(.vertical, Layout.lg)
+                    .padding(.top, Layout.lg)
+                    .padding(.bottom, Layout.xxxl + Layout.xl)
                     .readableWidth(sizeClass == .compact ? .infinity : Layout.readableWidth)
                 }
             }
