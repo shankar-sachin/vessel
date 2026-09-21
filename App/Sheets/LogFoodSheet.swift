@@ -85,7 +85,7 @@ struct LogFoodSheet: View {
             }
         }
         .sheet(isPresented: $isAddingItem) {
-            FoodItemEditor { newItem in
+            FoodSearchSheet { newItem in
                 items.append(newItem)
             }
         }
@@ -150,6 +150,11 @@ struct LogFoodSheet: View {
 /// An in-progress food item, held outside SwiftData until the meal is saved.
 struct DraftFoodItem: Identifiable, Hashable {
     let id: UUID
+    /// Database id when this came from a search, nil when typed by hand.
+    var foodID: String?
+    /// Resolved weight, when known. Kept so editing the quantity can rescale
+    /// nutrition rather than leaving stale numbers behind.
+    var grams: Double?
     var name: String
     var brand: String
     var quantity: Double
@@ -163,6 +168,8 @@ struct DraftFoodItem: Identifiable, Hashable {
 
     init(
         id: UUID = UUID(),
+        foodID: String? = nil,
+        grams: Double? = nil,
         name: String = "",
         brand: String = "",
         quantity: Double = 1,
@@ -175,6 +182,8 @@ struct DraftFoodItem: Identifiable, Hashable {
         tags: [String] = []
     ) {
         self.id = id
+        self.foodID = foodID
+        self.grams = grams
         self.name = name
         self.brand = brand
         self.quantity = quantity
@@ -191,6 +200,8 @@ struct DraftFoodItem: Identifiable, Hashable {
         let n = model.nutrients
         self.init(
             id: model.id,
+            foodID: model.foodID,
+            grams: model.grams,
             name: model.displayName,
             brand: model.brand ?? "",
             quantity: model.quantity,
@@ -217,11 +228,14 @@ struct DraftFoodItem: Identifiable, Hashable {
     func makeModel() -> FoodItem {
         FoodItem(
             id: id,
+            foodID: foodID,
             displayName: name.trimmingCharacters(in: .whitespacesAndNewlines),
             brand: brand.isEmpty ? nil : brand,
             quantity: quantity,
             unit: unit,
-            grams: unit.gramsPerUnit.map { $0 * quantity },
+            // Prefer the weight the resolver worked out; fall back to a direct
+            // unit conversion for hand-typed items.
+            grams: grams ?? unit.gramsPerUnit.map { $0 * quantity },
             nutrients: nutrients,
             tags: tags
         )

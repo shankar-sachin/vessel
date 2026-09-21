@@ -14,7 +14,12 @@ let package = Package(
         .target(
             name: "VesselNutrition",
             dependencies: [
-                .product(name: "VesselCore", package: "VesselCore"),            ],
+                .product(name: "VesselCore", package: "VesselCore")
+            ],
+            // The compiled USDA database ships inside the package rather than
+            // the app target, so anything depending on VesselNutrition — the
+            // app, tests, future tools — gets it automatically.
+            resources: [.copy("Resources/foods.sqlite")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(

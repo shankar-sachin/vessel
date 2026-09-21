@@ -22,6 +22,7 @@ public enum VesselAppearance {
     }
 
     #if canImport(UIKit)
+    @MainActor
     private static func configureNavigationBars() {
         // Two appearances, matching what iOS does by default: transparent when
         // the content is scrolled to the top (so the large title sits directly
@@ -41,6 +42,7 @@ public enum VesselAppearance {
         bar.compactScrollEdgeAppearance = scrollEdge
     }
 
+    @MainActor
     private static func applyTitleFonts(to appearance: UINavigationBarAppearance) {
         appearance.largeTitleTextAttributes = [
             .font: serifFont(size: 34, weight: .bold, textStyle: .largeTitle),

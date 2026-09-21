@@ -51,6 +51,11 @@ final class LoggingFlowUITests: XCTestCase {
 
         app.buttons["addFoodButton"].tap()
 
+        // Adding a food now opens database search; manual entry is behind the
+        // "Manual" action for anything the database doesn't know.
+        XCTAssertTrue(app.navigationBars["Add a food"].waitForExistence(timeout: 5))
+        app.buttons["Manual"].tap()
+
         let nameField = app.textFields["foodNameField"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 5))
         nameField.tap()
@@ -85,6 +90,8 @@ final class LoggingFlowUITests: XCTestCase {
         app.tabBars.buttons["Diet"].tap()
         app.buttons["Log food"].tap()
         app.buttons["addFoodButton"].tap()
+        XCTAssertTrue(app.navigationBars["Add a food"].waitForExistence(timeout: 5))
+        app.buttons["Manual"].tap()
 
         let nameField = app.textFields["foodNameField"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 5))
@@ -187,5 +194,64 @@ final class LoggingFlowUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Can"].waitForExistence(timeout: 5),
                       "The custom drink should appear in today's list")
         capture("20-water-after-save")
+    }
+}
+
+// MARK: - Phase 2: database-backed food search
+
+extension LoggingFlowUITests {
+
+    /// The whole point of Phase 2: log a real food without typing any numbers.
+    func testLogAFoodFromTheDatabase() throws {
+        app.tabBars.buttons["Diet"].tap()
+        app.buttons["Log food"].tap()
+        app.buttons["addFoodButton"].tap()
+
+        XCTAssertTrue(app.navigationBars["Add a food"].waitForExistence(timeout: 5),
+                      "Adding a food should now open search")
+
+        // An empty box still offers somewhere to start.
+        XCTAssertTrue(app.staticTexts["Common foods"].waitForExistence(timeout: 3),
+                      "Empty search should suggest common foods")
+        capture("30-foodsearch-empty")
+
+        let field = app.searchFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 3))
+        field.tap()
+        field.typeText("cooked white rice")
+
+        // The top hit must actually be rice, not rice flour or rice milk.
+        let riceResult = app.buttons.containing(
+            NSPredicate(format: "label CONTAINS[c] 'Rice'")
+        ).firstMatch
+        XCTAssertTrue(riceResult.waitForExistence(timeout: 5), "Search should find rice")
+        capture("31-foodsearch-results")
+        riceResult.tap()
+
+        XCTAssertTrue(app.navigationBars["Portion"].waitForExistence(timeout: 5),
+                      "Choosing a food should ask for a portion")
+
+        // Nutrition must be filled in from the database, not left at zero.
+        let weightLabel = app.staticTexts.matching(
+            NSPredicate(format: "label MATCHES '[0-9]+ g'")
+        ).firstMatch
+        XCTAssertTrue(weightLabel.waitForExistence(timeout: 3), "Portion should resolve to a weight")
+        capture("32-portion-picker")
+
+        app.buttons["Add"].tap()
+
+        // Back on the meal sheet with real numbers attached.
+        XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Save"].isEnabled, "A database food should enable saving")
+        capture("33-meal-with-database-food")
+
+        app.buttons["Save"].tap()
+
+        let logged = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS[c] 'Rice'")
+        ).firstMatch
+        XCTAssertTrue(logged.waitForExistence(timeout: 5),
+                      "The food should appear in the Diet log")
+        capture("34-diet-with-database-food")
     }
 }
