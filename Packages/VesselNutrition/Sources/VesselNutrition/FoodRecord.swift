@@ -28,9 +28,22 @@ public struct FoodRecord: Sendable, Identifiable, Hashable {
     /// Ingredient and allergen groups, used by the Date Log's correlations.
     public let tags: [String]
 
+    /// The noun this food actually *is*, derived in the database — "rice" for
+    /// "Rice, white, cooked", "cake" for "Rice cake". See `SearchIndex` in the
+    /// builder for why this cannot be worked out from the word order alone.
+    public let head: String
+
+    /// How many qualifying clauses the name carries. `Rice` is the food;
+    /// `Rice, white, glutinous, unenriched, cooked` is one particular case of it.
+    public let qualifiers: Int
+
+    /// One of the curated everyday foods, ranked for the empty search box.
+    public let isStaple: Bool
+
     public init(
         id: String, name: String, category: String, source: String, popularity: Int,
-        density: Double?, nutrientsPer100g: Nutrients, portions: [FoodPortion], tags: [String]
+        density: Double?, nutrientsPer100g: Nutrients, portions: [FoodPortion], tags: [String],
+        head: String = "", qualifiers: Int = 0, isStaple: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -41,6 +54,9 @@ public struct FoodRecord: Sendable, Identifiable, Hashable {
         self.nutrientsPer100g = nutrientsPer100g
         self.portions = portions
         self.tags = tags
+        self.head = head
+        self.qualifiers = qualifiers
+        self.isStaple = isStaple
     }
 
     /// Nutrition for an actual weight.

@@ -91,6 +91,49 @@ struct SearchQualityTests {
         expectTop("broccoli", contains: "Broccoli")
     }
 
+    @Test("A one-word search finds the food, not a dish made out of it")
+    func headNounDecidesTheAnswer() throws {
+        // The failure this exists to prevent: "rice" returned rice crackers,
+        // rice pudding and rice paper, because all three contain the word, are
+        // short, and are scored just as popular. What separates them is the
+        // head noun — what the food *is* — which the database now derives.
+        for (query, head) in [("rice", "rice"), ("apple", "apple"), ("coffee", "coffee"),
+                              ("egg", "egg"), ("milk", "milk"), ("bread", "bread")] {
+            let top = try #require(search.search(query, limit: 1).first)
+            #expect(
+                FoodSearch.stem(top.food.head) == head,
+                "'\(query)' returned '\(top.food.name)', whose head noun is '\(top.food.head)'"
+            )
+        }
+    }
+
+    @Test("A modifier in front of the head noun is a different food")
+    func unaskedModifiersRankBelow() throws {
+        // "Almond chicken" is as short as "Chicken, roasted" and shares its head
+        // noun, but almond chicken is not what you get by asking for chicken.
+        let top = try #require(search.search("chicken", limit: 1).first)
+        let leadingWords = FoodSearch.headClauseTokens(of: top.food.name)
+        #expect(leadingWords.first == "chicken",
+                "'chicken' returned '\(top.food.name)', which leads with something else")
+    }
+
+    @Test("Plurals and singulars find the same food")
+    func pluralsMatch() {
+        expectTop("eggs", contains: "Egg")
+        expectTop("apples", contains: "Apple")
+        // What the stemmer owes us is that a word and its plural agree —
+        // not that the result is itself a word.
+        for (singular, plural) in [("apple", "apples"), ("egg", "eggs"), ("oat", "oats"),
+                                   ("tomato", "tomatoes"), ("berry", "berries"),
+                                   ("squash", "squashes")] {
+            #expect(FoodSearch.stem(singular) == FoodSearch.stem(plural),
+                    "'\(singular)' and '\(plural)' should stem alike")
+        }
+        // And that it leaves alone what isn't a plural.
+        #expect(FoodSearch.stem("hummus") == "hummus")
+        #expect(FoodSearch.stem("couscous") == "couscous")
+    }
+
     @Test("Word order doesn't matter")
     func wordOrderIsFlexible() {
         // USDA writes "Rice, white, cooked"; people say "cooked white rice".

@@ -127,6 +127,61 @@ public enum SampleData {
             mood: .subdued, tags: ["energy"]
         ))
 
+        seedEarlierHistory(into: context, at: at)
+
         try? context.save()
+    }
+
+    /// Eight weeks before the detailed recent week, at lower resolution.
+    ///
+    /// The recent week is what the logging screens are demonstrated with; this
+    /// is what the *insights* need. A correlation engine that refuses to speak
+    /// below five exposures and two weeks of history has nothing to say about
+    /// seven days, which is correct of it and makes for a dull screenshot.
+    ///
+    /// There is a real pattern planted here — dairy at dinner twice a week,
+    /// bloating about two and a half hours later — alongside enough unrelated
+    /// reactions to give the base rate something to be. The engine is not told
+    /// any of that; it has to find it, which is also how the tests work.
+    private static func seedEarlierHistory(
+        into context: ModelContext,
+        at: (Int, Int, Int) -> Date
+    ) {
+        for daysAgo in 8...63 {
+            let breakfast = FoodEntry(loggedAt: at(daysAgo, 8, 0), slot: .breakfast, source: .text)
+            breakfast.items = [
+                FoodItem(foodID: "fdc:325871", displayName: "Toast", quantity: 2, unit: .slice,
+                         grams: 56, nutrients: Nutrients(kilocalories: 150, proteinG: 6,
+                                                         carbohydrateG: 29, fatG: 1.2, fiberG: 1.7),
+                         tags: ["gluten", "wheat"])
+            ]
+            context.insert(breakfast)
+
+            let hasDairy = daysAgo % 7 == 2 || daysAgo % 7 == 5
+            let dinner = FoodEntry(loggedAt: at(daysAgo, 19, 0), slot: .dinner, source: .text)
+            dinner.items = hasDairy
+                ? [FoodItem(foodID: "fdc:170904", displayName: "Lasagne", quantity: 1, unit: .serving,
+                            grams: 280, nutrients: Nutrients(kilocalories: 380, proteinG: 22,
+                                                             carbohydrateG: 38, fatG: 15),
+                            tags: ["dairy", "gluten", "wheat"])]
+                : [FoodItem(foodID: "fdc:171705", displayName: "Chicken and vegetables", quantity: 1,
+                            unit: .serving, grams: 300,
+                            nutrients: Nutrients(kilocalories: 340, proteinG: 38, carbohydrateG: 20, fatG: 11),
+                            tags: ["poultry"])]
+            context.insert(dinner)
+
+            if hasDairy {
+                context.insert(SymptomEntry(
+                    occurredAt: at(daysAgo, 21, 30), kind: .bloating,
+                    severity: daysAgo % 3 == 0 ? .strong : .moderate, durationMinutes: 90
+                ))
+            } else if daysAgo % 11 == 0 {
+                // Reactions that follow nothing in particular, so the engine has
+                // a base rate to measure against rather than a clean signal.
+                context.insert(SymptomEntry(
+                    occurredAt: at(daysAgo, 15, 0), kind: .bloating, severity: .mild
+                ))
+            }
+        }
     }
 }

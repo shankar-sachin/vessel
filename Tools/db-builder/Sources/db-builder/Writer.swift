@@ -39,6 +39,7 @@ struct DatabaseWriter {
         // Build the search index after the rows land — far faster than
         // maintaining it incrementally through 13,000 inserts.
         try exec(db, "INSERT INTO foods_fts(foods_fts) VALUES('rebuild')")
+        try DatabaseWriter.reindex(db)
         try exec(db, "ANALYZE")
         try exec(db, "VACUUM")
     }
@@ -243,6 +244,20 @@ struct DatabaseWriter {
 
     private func bind(_ statement: OpaquePointer?, _ index: Int32, _ value: String) {
         sqlite3_bind_text(statement, index, value, -1, Self.transient)
+    }
+
+    /// Derives the head-noun search index. Safe to run on a database that
+    /// already has it — the `ALTER`s fail, and only those, which is why they
+    /// are executed apart from the derivation.
+    static func reindex(_ db: OpaquePointer) throws {
+        for statement in SearchIndex.sql.split(separator: ";") {
+            let trimmed = statement.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { continue }
+            sqlite3_exec(db, trimmed, nil, nil, nil)   // duplicate column is expected
+        }
+        guard sqlite3_exec(db, SearchIndex.populate, nil, nil, nil) == SQLITE_OK else {
+            throw BuilderError.sqlite("reindex: \(String(cString: sqlite3_errmsg(db)))")
+        }
     }
 
     private func exec(_ db: OpaquePointer, _ sql: String) throws {

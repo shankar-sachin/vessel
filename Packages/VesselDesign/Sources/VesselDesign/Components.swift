@@ -155,9 +155,12 @@ public struct FloatingLogButton: View {
     public var body: some View {
         Button(action: action) {
             Image(systemName: "plus")
-                .font(.system(size: 24, weight: .semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.white)
-                .frame(width: 58, height: 58)
+                // 52pt: comfortably above the 44pt tap minimum without
+                // dominating the screen it floats over. At 58 with a wide glow
+                // it read as the main event rather than a way into one.
+                .frame(width: 52, height: 52)
                 .background(
                     Circle().fill(
                         LinearGradient(
@@ -169,8 +172,8 @@ public struct FloatingLogButton: View {
                 )
                 // A tinted shadow rather than a neutral one, so the button
                 // looks lit from within instead of pasted on.
-                .shadow(color: tint.opacity(0.45), radius: 14, y: 6)
-                .shadow(color: Color(hex: 0x3A2E20).opacity(0.18), radius: 4, y: 2)
+                .shadow(color: tint.opacity(0.35), radius: 9, y: 4)
+                .shadow(color: Color(hex: 0x3A2E20).opacity(0.16), radius: 3, y: 1)
                 .scaleEffect(isPressed ? 0.92 : 1)
         }
         .buttonStyle(.plain)

@@ -149,6 +149,41 @@ public final class FoodDatabase: @unchecked Sendable {
     ///
     /// Returns more rows than the UI shows so the ranker upstream has something
     /// to work with — FTS decides *whether* a row matches, not how well.
+    /// Rows whose head noun is one of `heads`, best-qualified first.
+    ///
+    /// A separate query rather than a clause in the FTS one, because it answers
+    /// a different question. FTS asks "does this name contain the word"; this
+    /// asks "is this name *about* the word". Searching rice, the former returns
+    /// 161 rows of which plain cooked rice is one, and bm25 has no reason to
+    /// prefer it. Fetching the head matches directly guarantees the staple is in
+    /// the candidate set before anything gets ranked.
+    func headMatches(heads: [String], limit: Int) -> [FoodRecord] {
+        lock.lock(); defer { lock.unlock() }
+        guard let handle, !heads.isEmpty else { return [] }
+
+        let placeholders = (1...heads.count).map { "?\($0)" }.joined(separator: ", ")
+        let sql = Self.selectColumns + """
+             WHERE f.head IN (\(placeholders))
+             ORDER BY f.qualifiers ASC,
+                      CASE WHEN f.staple_rank IS NULL THEN 1 ELSE 0 END,
+                      f.popularity DESC,
+                      length(f.name) ASC
+             LIMIT ?\(heads.count + 1)
+        """
+
+        var statement: OpaquePointer?
+        defer { sqlite3_finalize(statement) }
+        guard sqlite3_prepare_v2(handle, sql, -1, &statement, nil) == SQLITE_OK else { return [] }
+        for (index, head) in heads.enumerated() { bind(statement, Int32(index + 1), head) }
+        sqlite3_bind_int(statement, Int32(heads.count + 1), Int32(limit))
+
+        var results: [FoodRecord] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            if let record = record(from: statement, handle: handle) { results.append(record) }
+        }
+        return results
+    }
+
     func candidates(matching query: String, limit: Int) -> [FoodRecord] {
         lock.lock(); defer { lock.unlock() }
         guard let handle, let ftsQuery = Self.ftsExpression(for: query) else { return [] }
@@ -195,7 +230,8 @@ public final class FoodDatabase: @unchecked Sendable {
     SELECT f.rowid, f.id, f.name, f.category, f.source, f.popularity, f.density,
            f.kcal, f.protein, f.carbs, f.fat, f.fiber, f.sugar, f.added_sugar,
            f.sat_fat, f.trans_fat, f.cholesterol, f.sodium, f.potassium,
-           f.calcium, f.iron, f.vit_c, f.vit_d, f.water
+           f.calcium, f.iron, f.vit_c, f.vit_d, f.water,
+           f.head, f.qualifiers, f.staple_rank
     FROM foods f
     """
 
@@ -233,7 +269,10 @@ public final class FoodDatabase: @unchecked Sendable {
                 ? nil : sqlite3_column_double(statement, 6),
             nutrientsPer100g: nutrients,
             portions: portions(forRowID: rowid, handle: handle),
-            tags: tags(forRowID: rowid, handle: handle)
+            tags: tags(forRowID: rowid, handle: handle),
+            head: text(statement, 24) ?? "",
+            qualifiers: Int(sqlite3_column_int(statement, 25)),
+            isStaple: sqlite3_column_type(statement, 26) != SQLITE_NULL
         )
     }
 

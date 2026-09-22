@@ -2,16 +2,19 @@ import SwiftUI
 import SwiftData
 import VesselCore
 import VesselDesign
+import VesselInsights
 
-/// The Date Log: symptoms and reactions, and eventually what they correlate with.
-///
-/// The correlation engine lands in a later phase; until then this is an honest
-/// record rather than a screen making claims it can't yet support.
+/// The Date Log: symptoms and reactions, and what they correlate with.
 struct DateLogScreen: View {
     @Environment(AppRouter.self) private var router
     @Environment(\.horizontalSizeClass) private var sizeClass
     @Environment(\.modelContext) private var context
     @Query(sort: \SymptomEntry.occurredAt, order: .reverse) private var entries: [SymptomEntry]
+    // The correlation engine needs the other side of the question. Both logs
+    // are fetched here rather than inside the insights view so SwiftData
+    // observes them and the findings update as things are logged.
+    @Query(sort: \FoodEntry.loggedAt) private var meals: [FoodEntry]
+    @Query(sort: \WaterEntry.loggedAt) private var drinks: [WaterEntry]
 
     @State private var editingEntry: SymptomEntry?
 
@@ -34,7 +37,7 @@ struct DateLogScreen: View {
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: Layout.lg) {
-                        insightsPlaceholder
+                        InsightsSection(meals: meals, drinks: drinks, symptoms: entries)
 
                         ForEach(grouped, id: \.day) { group in
                             VStack(alignment: .leading, spacing: Layout.sm) {
@@ -84,26 +87,6 @@ struct DateLogScreen: View {
         }
         .sheet(item: $editingEntry) { entry in
             LogSymptomSheet(existing: entry)
-        }
-    }
-
-    /// Sets the expectation that patterns need data, rather than showing an
-    /// empty "insights" box that looks broken.
-    private var insightsPlaceholder: some View {
-        VesselCard {
-            VStack(alignment: .leading, spacing: Layout.sm) {
-                Label("Looking for patterns", systemImage: "chart.dots.scatter")
-                    .font(Typography.heading)
-                    .foregroundStyle(Palette.ink)
-                Text("Vessel compares what you ate against how you felt afterwards. "
-                     + "It needs a few weeks of both before any pattern it finds means much.")
-                    .font(Typography.callout)
-                    .foregroundStyle(Palette.inkSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("\(entries.count) reaction\(entries.count == 1 ? "" : "s") recorded so far.")
-                    .font(Typography.caption)
-                    .foregroundStyle(Palette.inkTertiary)
-            }
         }
     }
 }

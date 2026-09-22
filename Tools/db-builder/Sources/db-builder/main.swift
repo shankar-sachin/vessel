@@ -1,4 +1,5 @@
 import Foundation
+import SQLite3
 
 // Compiles the USDA FoodData Central CSV dumps into Vessel's bundled database.
 //
@@ -9,12 +10,33 @@ import Foundation
 // appears twice — see `deduplicate`.
 
 let arguments = CommandLine.arguments
+
+// Rebuilding from the CSVs needs 12 MB of USDA downloads. Re-deriving the
+// search index needs only the database, so it gets its own entry point.
+if arguments.count == 3, arguments[1] == "--reindex" {
+    var handle: OpaquePointer?
+    guard sqlite3_open_v2(arguments[2], &handle, SQLITE_OPEN_READWRITE, nil) == SQLITE_OK,
+          let db = handle else {
+        print("cannot open \(arguments[2])")
+        exit(1)
+    }
+    try DatabaseWriter.reindex(db)
+    sqlite3_exec(db, "ANALYZE", nil, nil, nil)
+    sqlite3_close(db)
+    print("reindexed \(arguments[2])")
+    exit(0)
+}
+
 guard arguments.count >= 3 else {
     print("""
     usage: db-builder <input-dir> <output.sqlite>
 
       <input-dir>  directory containing extracted FoodData Central folders
       <output>     path to write the compiled SQLite database
+
+    db-builder --reindex <db.sqlite>
+
+      re-derives the head-noun search index on an existing database
     """)
     exit(2)
 }
