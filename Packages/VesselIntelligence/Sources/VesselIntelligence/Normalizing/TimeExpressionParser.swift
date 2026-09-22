@@ -51,6 +51,9 @@ public struct TimeExpressionParser: Sendable {
         (["for", "dinner"], 19, .dinner),
         (["at", "supper"], 19, .dinner),
         (["for", "supper"], 19, .dinner),
+        // British: tea is the evening meal. Only with "for" — "biscuits with my
+        // tea" is a drink, and a bare "tea" nearly always is.
+        (["for", "tea"], 18, .dinner),
         (["breakfast"], 8, .breakfast),
         (["lunch"], 13, .lunch),
         (["dinner"], 19, .dinner),
@@ -84,7 +87,9 @@ public struct TimeExpressionParser: Sendable {
             var start = index
             for back in stride(from: index - 1, through: max(0, index - 3), by: -1) {
                 if tokens[back] == "yesterday" { dayOffset = -1; start = back }
-                if tokens[back] == "at" { start = min(start, back) }
+                // "around 11", "about 8pm" — the approximating word belongs to
+                // the time; left behind, it reached the tagger as a stray word.
+                if ["at", "around", "about", "by"].contains(tokens[back]) { start = min(start, back) }
             }
 
             let base = calendar.date(byAdding: .day, value: dayOffset, to: now) ?? now
@@ -187,11 +192,27 @@ public struct TimeExpressionParser: Sendable {
             return Resolution(
                 date: date,
                 slot: part.slot,
-                range: start..<(start + part.phrase.count),
+                range: Self.extendOverPreposition(start, in: tokens)..<(start + part.phrase.count),
                 isApproximate: true
             )
         }
         return nil
+    }
+
+    /// Takes in the preposition introducing a day part: "with dinner",
+    /// "after my lunch".
+    ///
+    /// Only "for" and "at" used to be consumed, so "a beer with dinner" reached
+    /// the tagger as "a beer with" — a sentence ending in a bare preposition,
+    /// which no training example ever does. The tagger read the stray "with"
+    /// as part of the drink.
+    static func extendOverPreposition(_ start: Int, in tokens: [String]) -> Int {
+        var index = start
+        if index > 0, ["my", "the"].contains(tokens[index - 1]) { index -= 1 }
+        if index > 0, ["with", "after", "before", "during", "over", "at", "for"].contains(tokens[index - 1]) {
+            return index - 1
+        }
+        return start
     }
 
     private func firstIndex(of phrase: [String], in tokens: [String]) -> Int? {

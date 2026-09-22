@@ -50,7 +50,7 @@ struct FoodItemEditor: View {
             } header: {
                 Text("What")
             } footer: {
-                Text("Searching a food database arrives in a later phase — for now these are your own numbers.")
+                Text("For something the database doesn't have. These numbers are yours and are kept as entered.")
             }
 
             Section("How much") {

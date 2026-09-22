@@ -50,8 +50,14 @@ public struct FoodSearch: Sendable {
         }
         guard !candidates.isEmpty else { return [] }
 
+        let typicality = Self.typicality(of: candidates)
         return candidates
-            .map { FoodMatch(food: $0, score: score(food: $0, query: cleaned, queryTokens: queryTokens)) }
+            .map { food in
+                FoodMatch(food: food, score: score(
+                    food: food, query: cleaned, queryTokens: queryTokens,
+                    typicality: typicality[food.id] ?? Typicality(score: 0, qualifierCost: Double(food.qualifiers))
+                ))
+            }
             .filter { $0.score > 0 }
             .sorted { lhs, rhs in
                 // Ties are common — many rows differ only in a qualifier the
@@ -82,7 +88,7 @@ public struct FoodSearch: Sendable {
     /// cooked": it contains the whole query, it is two words long, and USDA
     /// scores it just as popular. Nothing in that trio knows that a rice cake
     /// is a cake. The head noun does.
-    private func score(food: FoodRecord, query: String, queryTokens: [String]) -> Double {
+    private func score(food: FoodRecord, query: String, queryTokens: [String], typicality: Typicality) -> Double {
         let name = Self.normalize(food.name)
         let nameTokens = name.split(separator: " ").map(String.init)
         let queryStems = queryTokens.map(Self.stem)
@@ -122,15 +128,35 @@ public struct FoodSearch: Sendable {
         aboutness = max(0, aboutness - Double(unaskedModifiers) * 0.25)
 
         // 2. How much of the query the name actually covers.
+        //
+        // Compared on stems as well as raw words. Raw only, "eggs" covered
+        // nothing in "Egg, whole, cooked" — so the only rows that could win were
+        // the handful USDA happened to spell "Eggs", led by egg yolk.
+        let nameStems = Set(nameTokens.map(Self.stem))
         let covered = queryTokens.filter { token in
-            nameTokens.contains { $0 == token || $0.hasPrefix(token) }
+            nameStems.contains(Self.stem(token))
+                || nameTokens.contains { $0 == token || $0.hasPrefix(token) }
         }.count
         let coverage = queryTokens.isEmpty ? 0 : Double(covered) / Double(queryTokens.count)
 
         // 3. How heavily qualified the name is. Counted in clauses rather than
         // words, because a clause is a decision the user did not make: asking
         // for rice should not land on "glutinous, unenriched".
-        let brevity = 1.0 / (1.0 + Double(food.qualifiers) * 0.3)
+        //
+        // Except USDA's own "not specified" clauses. "Coffee, NS as to type" is
+        // how the survey coded someone who said just "coffee": the clause
+        // records a decision *not* made, which is exactly the user's position.
+        // Counting it as a qualifier ranked those rows below "Coffee, Cuban".
+        //
+        // And each clause is charged by how unusual it is in the food's family
+        // (see `typicality(of:)`): "Egg, whole, raw" pins down less than
+        // "Egg, creamed", despite having more commas.
+        let unspecified = Self.unspecifiedClauseCount(in: food.name)
+        let specified = max(0, food.qualifiers - unspecified)
+        let brevity = 1.0 / (1.0 + typicality.qualifierCost * 0.3)
+        // Rows that leave something open, and pin nothing else down, are the
+        // generic answer to a query that pinned nothing down either.
+        let generic = unspecified > 0 && specified <= unspecified ? 1.0 : 0.0
 
         // 4. Curated everyday foods, in the builder's order.
         let staple = food.isStaple ? 1.0 : 0.0
@@ -139,11 +165,86 @@ public struct FoodSearch: Sendable {
         // popularity score.
         let prior = min(1.0, Double(food.popularity) / 100.0)
 
+        // 6. `typicality`: how ordinary this row's qualifiers are among its
+        // own family. Computed per search; see `typicality(of:)`.
+
         let combined = coverage * 0.35 + aboutness * 0.35 + brevity * 0.12
-            + staple * 0.10 + prior * 0.08
+            + staple * 0.10 + prior * 0.08 + generic * 0.06 + typicality.score * 0.10
 
         // Nothing matched at all — guard against FTS prefix noise.
         return covered == 0 ? 0 : min(1.0, combined)
+    }
+
+    /// How ordinary each candidate is among the rows sharing its head noun.
+    ///
+    /// Of the egg rows, dozens say "whole" and one says "creamed"; of the
+    /// melons, most say "raw" and one says "frozen". A clause shared across a
+    /// family describes the ordinary food, and a rare one describes a special
+    /// case — which is what a bare "eggs" or "melon" does not ask for. Each row
+    /// scores the mean share of its family that carries each of its clauses.
+    /// "Not specified" clauses are skipped; they are scored by `generic`.
+    ///
+    /// On its own this is noisy — it rewards whatever USDA catalogued densely,
+    /// so it rates decaf lattes as the typical coffee — which is why it only
+    /// ever breaks near-ties between rows the other signals already like.
+    static func typicality(of foods: [FoodRecord]) -> [String: Typicality] {
+        let families = Dictionary(grouping: foods) { stem($0.head) }
+        var result: [String: Typicality] = [:]
+        for members in families.values {
+            let clausesByID = Dictionary(uniqueKeysWithValues: members.map { food in
+                (food.id, specifiedClauses(of: food.name))
+            })
+            var counts: [String: Int] = [:]
+            for clauses in clausesByID.values {
+                for clause in Set(clauses) { counts[clause, default: 0] += 1 }
+            }
+            // Relative to the family's commonest clause, so a big family with
+            // many shallow variants doesn't flatten every share towards zero.
+            let commonest = Double(max(1, counts.values.max() ?? 1))
+            func share(_ clause: String) -> Double { Double(counts[clause] ?? 0) / commonest }
+
+            for food in members {
+                let clauses = clausesByID[food.id] ?? []
+                let mean = clauses.isEmpty ? 1.0 : clauses.map(share).reduce(0, +) / Double(clauses.count)
+                // What the trailing clauses cost `brevity`: a clause most of the
+                // family shares ("whole" for eggs) is close to free; a rare one
+                // ("creamed") costs a full qualifier.
+                let cost = clauses.filter { !$0.hasPrefix("~") }.map { 1 - share($0) }.reduce(0, +)
+                result[food.id] = Typicality(score: mean, qualifierCost: cost)
+            }
+        }
+        return result
+    }
+
+    struct Typicality {
+        /// Mean relative share of the row's clauses within its family, 0...1.
+        var score: Double
+        /// Trailing qualifiers, each weighted by how unusual it is.
+        var qualifierCost: Double
+    }
+
+    /// A name's qualifying clauses, normalised, without "not specified" ones.
+    ///
+    /// Words standing before the head in the first clause count as clauses
+    /// too: "Dessert pizza" has no comma, but "dessert" qualifies it every bit
+    /// as much as ", dessert" would.
+    static func specifiedClauses(of name: String) -> [String] {
+        let modifiers = headClauseTokens(of: name).dropLast().map { "~" + stem($0) }
+        let trailing = name.components(separatedBy: ",").dropFirst()
+            .filter { !isUnspecified($0) }
+            .map(normalize)
+            .filter { !$0.isEmpty }
+        return modifiers + trailing
+    }
+
+    private static func isUnspecified(_ clause: String) -> Bool {
+        clause.split(separator: " ").contains("NFS") || clause.contains("NS as to")
+    }
+
+    /// How many of a name's clauses are USDA's "not specified" markers —
+    /// "NS as to fat", "NFS", "white or NFS".
+    static func unspecifiedClauseCount(in name: String) -> Int {
+        name.components(separatedBy: ",").dropFirst().filter(isUnspecified).count
     }
 
     /// The words of a name's first clause — everything before the first comma,

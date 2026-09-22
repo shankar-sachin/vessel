@@ -94,6 +94,28 @@ final class QuickLogUITests: XCTestCase {
         capture("44-quicklog-symptom")
     }
 
+    /// The phrase shapes v1.5.1 retrained for, checked in the running app rather
+    /// than only in the package tests: a partitive that isn't a drink, a "with"
+    /// that isn't a drink, and a drink next to a word that used to mean symptom.
+    func testPhrasingsTheRetrainingFixed() throws {
+        let cases: [(text: String, expected: String, shot: String)] = [
+            ("a quarter of a melon", "A meal", "45-quicklog-partitive"),
+            ("half a baguette with butter", "A meal", "46-quicklog-with-butter"),
+            ("a bottle of water after my run", "A drink", "47-quicklog-after-run"),
+        ]
+        for (index, item) in cases.enumerated() {
+            if index > 0 {
+                app.terminate()
+                app.launch()
+            }
+            openQuickLog()
+            type(item.text)
+            XCTAssertTrue(app.staticTexts[item.expected].waitForExistence(timeout: 6),
+                          "\"\(item.text)\" should be read as \(item.expected.lowercased())")
+            capture(item.shot)
+        }
+    }
+
     func testExamplesArePresentAndUsable() throws {
         openQuickLog()
 

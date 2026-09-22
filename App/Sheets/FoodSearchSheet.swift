@@ -35,6 +35,7 @@ struct FoodSearchSheet: View {
             .background(Palette.ground)
             .navigationTitle("Add a food")
             .navigationBarTitleDisplayMode(.inline)
+            .vesselSheetBar()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -104,21 +105,21 @@ struct FoodSearchSheet: View {
             selected = match.food
         } label: {
             HStack(alignment: .firstTextBaseline, spacing: Layout.sm) {
+                let name = FoodName(match.food.displayName)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(match.food.name)
+                    Text(name.title)
                         .font(Typography.body)
                         .foregroundStyle(Palette.ink)
                         .multilineTextAlignment(.leading)
 
-                    HStack(spacing: Layout.xs) {
-                        Text("\(Int(match.food.nutrientsPer100g.kilocalories)) kcal / 100 g")
-                        if let portion = match.food.defaultPortion {
-                            Text("·")
-                            Text(portion.label)
-                        }
-                    }
+                    // What distinguishes this row from its neighbours first,
+                    // then the numbers — "cooked · no added fat · 129 kcal".
+                    Text(([name.detail] + [
+                        "\(Int(match.food.nutrientsPer100g.kilocalories)) kcal / 100 g"
+                    ]).compactMap { $0 }.joined(separator: " · "))
                     .font(Typography.caption)
                     .foregroundStyle(Palette.inkTertiary)
+                    .lineLimit(2)
 
                     if !match.food.tags.isEmpty {
                         // Showing tags here rather than only in the detail view

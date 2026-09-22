@@ -174,7 +174,7 @@ public final class FoodItem {
     /// "2 slices", "180 g", "1 serving".
     public var quantityDescription: String {
         let formatted = quantity.formatted(.number.precision(.fractionLength(0...2)))
-        return "\(formatted) \(unit.shortName)"
+        return "\(formatted) \(unit.shortName(for: quantity))"
     }
 }
 

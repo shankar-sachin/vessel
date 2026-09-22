@@ -232,8 +232,12 @@ extension LoggingFlowUITests {
                       "Choosing a food should ask for a portion")
 
         // Nutrition must be filled in from the database, not left at zero.
+        //
+        // Matched on the sheet's own "Weight" row. The looser '[0-9]+ g' this
+        // used to be passed by finding "165 g" on the Diet screen *behind* the
+        // sheet, and would have gone on passing with the weight stuck at zero.
         let weightLabel = app.staticTexts.matching(
-            NSPredicate(format: "label MATCHES '[0-9]+ g'")
+            NSPredicate(format: "label MATCHES 'Weight, [1-9][0-9]* g'")
         ).firstMatch
         XCTAssertTrue(weightLabel.waitForExistence(timeout: 3), "Portion should resolve to a weight")
         capture("32-portion-picker")

@@ -62,16 +62,33 @@ was an afternoon.
 
 | | Synthetic (same generator) | **Hand-written real phrasings** |
 |---|---|---|
-| Intent accuracy | 99.4% | **90.1%** (64/71) |
-| Food extraction | — | **96.3%** (26/27) |
-| Quantity accuracy | — | **100%** |
-| Tagger macro F1 | 0.986 | — |
+| Intent accuracy | 98.8% | **98.1%** (205/209) |
+| Food extraction | — | **97.2%** (104/107) |
+| Quantity accuracy | — | **100%** (16/16) |
+| Tagger macro F1 | 0.980 | — |
 
 The right-hand column is the one that means anything. The synthetic numbers
 mostly prove the model learned the grammar it was taught, so the evaluation set
-is 71 utterances written by hand in shapes the generator never produces. When
-that set was expanded from 51 cases to 71 the score *dropped* from 94.1% to
-90.1% — the first number was flattered by a set partly designed around it.
+is 209 utterances written by hand in shapes the generator never produces.
+
+The set has only ever grown, and growing it has repeatedly *lowered* the score:
+51 cases scored 94.1%, 71 scored 90.1%, and the 121 written for v1.5.1 scored
+83.5% before any retraining. Each drop was the honest number catching up with a
+set that had stopped being flattering.
+
+Food extraction had its own reckoning. It used to check whether the expected
+word appeared *anywhere* in the extracted text, so "baguette with butter"
+counted as finding the baguette while the app logged only butter. Graded
+strictly — every food named must come back as a span of its own — the same
+parser scored 72%. Most of the gap was assembly, not the model: the tagger
+labelled the two foods correctly and the code that grouped its labels glued
+them back together.
+
+**The corpus is run through the app's own normalizer.** The models never see
+what was typed; they see what `TextNormalizer` made of it. Every generated
+sentence now goes through that same code before it is written, so a change to
+the normalizer changes the training data with it, and the two can't drift apart
+the way they repeatedly did when the generator imitated it by hand.
 
 **The parse is always shown before it's saved.** A parser that fills entries in
 invisibly is only pleasant while it's right; the moment it's wrong you've logged

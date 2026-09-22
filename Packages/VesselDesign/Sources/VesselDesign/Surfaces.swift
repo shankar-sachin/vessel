@@ -61,6 +61,22 @@ private struct CardBackground: ViewModifier {
 }
 
 public extension View {
+    /// A sheet's navigation bar in the page's own ground colour.
+    ///
+    /// Left transparent, a scrolled form slid its content up behind the Cancel
+    /// and Save buttons — a selected symptom chip showed as a red blob behind
+    /// "Cancel", and a caption ghosted through the title. A bar in the ground
+    /// colour lets content disappear under it cleanly, with no visible seam.
+    func vesselSheetBar() -> some View {
+        #if os(iOS)
+        return self
+            .toolbarBackground(Palette.ground, for: .navigationBar)
+            .toolbarBackgroundVisibility(.visible, for: .navigationBar)
+        #else
+        return self
+        #endif
+    }
+
     /// Applies Liquid Glass where available, and a legible translucent material
     /// everywhere else. For chrome that floats above scrolling content.
     func vesselGlass(in shape: some Shape = Capsule()) -> some View {

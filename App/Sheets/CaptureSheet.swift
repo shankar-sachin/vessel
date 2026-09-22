@@ -62,6 +62,7 @@ struct CaptureSheet: View {
             .background(Palette.ground)
             .navigationTitle("From a photo")
             .navigationBarTitleDisplayMode(.inline)
+            .vesselSheetBar()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -247,7 +248,7 @@ struct CaptureSheet: View {
         selected.insert(match.food.name)
         reading = PlateReading(
             candidates: [FoodCandidate(
-                label: match.food.name,
+                label: match.food.displayName,
                 confidence: match.score,
                 matched: match.food,
                 areaFraction: nil
@@ -290,7 +291,7 @@ struct CaptureSheet: View {
             let grams = food.defaultPortion?.grams ?? 100
             let item = FoodItem(
                 foodID: food.id,
-                displayName: food.name,
+                displayName: food.displayName,
                 quantity: 1,
                 unit: .serving,
                 grams: grams,
@@ -326,7 +327,7 @@ private struct CandidateRow: View {
                     .foregroundStyle(isSelected ? Palette.diet : Palette.inkTertiary)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(candidate.matched?.name ?? candidate.label.capitalized)
+                    Text(candidate.matched.map { FoodName($0.displayName).title } ?? candidate.label.capitalized)
                         .font(Typography.body)
                         .foregroundStyle(Palette.ink)
                     HStack(spacing: Layout.xs) {

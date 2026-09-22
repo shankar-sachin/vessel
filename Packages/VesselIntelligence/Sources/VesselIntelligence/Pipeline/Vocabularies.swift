@@ -78,7 +78,7 @@ enum DrinkVolume {
 /// "bloating" and "so bloated" have to land on one series or the Date Log sees
 /// three unrelated symptoms with too little data to say anything about any of
 /// them.
-enum SymptomVocabulary {
+public enum SymptomVocabulary {
 
     private static let table: [(needles: [String], kind: SymptomKind)] = [
         (["bloat", "bloated", "bloating", "distended"], .bloating),
@@ -98,6 +98,13 @@ enum SymptomVocabulary {
         (["joint", "joints", "achy"], .jointPain),
         (["racing heart", "palpitations", "heart racing"], .racingHeart)
     ]
+
+    /// Every word or phrase the app files as a symptom.
+    ///
+    /// Public so the training corpus can use the same vocabulary: the
+    /// classifier had never seen "loose", which this table maps straight to
+    /// diarrhoea, and returned a uniform distribution for "loose stools".
+    public static var phrases: [String] { table.flatMap(\.needles) }
 
     static func kind(for phrase: String) -> SymptomKind? {
         let lowered = phrase.lowercased()

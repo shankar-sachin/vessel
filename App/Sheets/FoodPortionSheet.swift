@@ -43,12 +43,13 @@ struct FoodPortionSheet: View {
         NavigationStack {
             Form {
                 Section {
+                    let name = FoodName(food.displayName)
                     VStack(alignment: .leading, spacing: Layout.xs) {
-                        Text(food.name)
+                        Text(name.title)
                             .font(Typography.heading)
                             .foregroundStyle(Palette.ink)
-                        if !food.category.isEmpty {
-                            Text(food.category)
+                        if let detail = name.detail {
+                            Text(detail)
                                 .font(Typography.caption)
                                 .foregroundStyle(Palette.inkTertiary)
                         }
@@ -117,6 +118,7 @@ struct FoodPortionSheet: View {
             .background(Palette.ground)
             .navigationTitle("Portion")
             .navigationBarTitleDisplayMode(.inline)
+            .vesselSheetBar()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -143,7 +145,9 @@ struct FoodPortionSheet: View {
 
     private func macroRow(_ label: String, _ value: Double, _ unit: String, _ tint: Color) -> some View {
         LabeledContent {
-            Text("\(value.formatted(.number.precision(.fractionLength(0...1)))) \(unit)")
+            // Energy reads as a whole number everywhere else in the app;
+            // "203.8 kcal" suggests a precision the database doesn't have.
+            Text("\(value.formatted(.number.precision(.fractionLength(unit == "kcal" ? 0...0 : 0...1)))) \(unit)")
                 .font(Typography.numeric)
                 .foregroundStyle(Palette.ink)
                 .contentTransition(.numericText(value: value))
@@ -211,7 +215,7 @@ struct FoodPortionSheet: View {
         onCommit(DraftFoodItem(
             foodID: food.id,
             grams: grams,
-            name: food.name,
+            name: food.displayName,
             brand: "",
             quantity: quantity,
             unit: unit,

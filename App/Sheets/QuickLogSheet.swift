@@ -98,6 +98,7 @@ struct QuickLogSheet: View {
             .background(Palette.ground)
             .navigationTitle("Quick log")
             .navigationBarTitleDisplayMode(.inline)
+            .vesselSheetBar()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -241,7 +242,7 @@ struct QuickLogSheet: View {
     private func entryFoodIdentities() -> [(id: String, name: String)] {
         resolved.compactMap { item in
             guard let food = effectiveFood(for: item) else { return nil }
-            return (food.id, food.name)
+            return (food.id, food.displayName)
         }
     }
 
@@ -333,7 +334,7 @@ struct QuickLogSheet: View {
             let grams = resolvedFood.grams ?? chosen?.defaultPortion?.grams ?? 100
             let item = FoodItem(
                 foodID: chosen?.id,
-                displayName: chosen?.name ?? resolvedFood.phrase.capitalized,
+                displayName: chosen?.displayName ?? resolvedFood.phrase.capitalized,
                 quantity: resolvedFood.quantity,
                 unit: resolvedFood.unit,
                 grams: grams,
@@ -426,7 +427,7 @@ private struct ResolvedFoodRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             HStack(alignment: .firstTextBaseline) {
-                Text(food?.name ?? resolved.phrase.capitalized)
+                Text(food.map { FoodName($0.displayName).title } ?? resolved.phrase.capitalized)
                     .font(Typography.body)
                     .foregroundStyle(Palette.ink)
                 Spacer(minLength: Layout.xs)

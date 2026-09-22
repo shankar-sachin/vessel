@@ -35,7 +35,15 @@ print("· vocabulary: \(foods.count) food names")
 // Fixed seed: the same corpus every run, so a change in model accuracy is
 // attributable to the model rather than to different training data.
 let corpusSeed: UInt64 = 0x5645_5353_454C_0001
-var generator = Generator(foods: foods, seed: corpusSeed)
+let triggerGroups = try FoodLoader.loadTags(from: databaseURL)
+print("· trigger groups: \(triggerGroups.count)")
+let excludedHeads = Grammar.nonFoodHeads
+    .union(Grammar.drinkNouns.flatMap { $0.split(separator: " ").map(String.init) })
+    .union(Grammar.allUnits)
+    .union(Grammar.drinkVessels)
+let heads = try FoodLoader.loadHeads(from: databaseURL, excluding: excludedHeads)
+print("· head nouns: \(heads.count)")
+var generator = Generator(foods: foods, heads: heads, triggerGroups: triggerGroups, seed: corpusSeed)
 let examples = generator.generate(count: count)
 print("· generated: \(examples.count) utterances")
 

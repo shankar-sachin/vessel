@@ -24,8 +24,22 @@ enum FoodLoader {
         var statement: OpaquePointer?
         defer { sqlite3_finalize(statement) }
 
+        // Composite names are excluded, not merely deprioritised.
+        //
+        // FNDDS is full of rows like "Fish and chips" and "Chicken with rice".
+        // Used as a single FOOD span they teach the tagger that "and" and
+        // "with" belong *inside* a food name — and the grammar's whole
+        // multi-item story depends on them joining two separate ones. This
+        // surfaced the moment food sampling was weighted toward popular rows:
+        // "eggs and toast" came back as one food instead of two, which is the
+        // same class of regression the position-bias fix was written for.
+        // Multi-item utterances are the generator's job; single items are this
+        // query's.
         let sql = """
         SELECT name FROM foods
+        WHERE lower(name) NOT LIKE '% and %'
+          AND lower(name) NOT LIKE '% with %'
+          AND lower(name) NOT LIKE '% plus %'
         ORDER BY CASE WHEN staple_rank IS NULL THEN 1 ELSE 0 END,
                  staple_rank ASC, popularity DESC
         LIMIT ?1
@@ -48,6 +62,59 @@ enum FoodLoader {
             )
         }
         return names
+    }
+
+    /// The nouns foods are named for — "melon", "lasagna", "pancakes" —
+    /// ordered by how many rows each one covers.
+    ///
+    /// People name a food by its head noun far more often than by its full
+    /// USDA name, but the corpus drew only full names ("raw honeydew melons"),
+    /// so a bare "melon" at the end of "a quarter of a melon" was a word the
+    /// tagger had barely seen on its own and labelled NONE. The database
+    /// derives the head of every row; this reads them back.
+    static func loadHeads(from url: URL, excluding excluded: Set<String>) throws -> [String] {
+        var handle: OpaquePointer?
+        guard sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
+              let db = handle
+        else { throw CorpusError.cannotOpenDatabase(url.path) }
+        defer { sqlite3_close(db) }
+
+        var statement: OpaquePointer?
+        defer { sqlite3_finalize(statement) }
+        let sql = "SELECT head FROM foods WHERE head != '' GROUP BY head HAVING count(*) >= 2 ORDER BY count(*) DESC"
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else {
+            throw CorpusError.queryFailed(String(cString: sqlite3_errmsg(db)))
+        }
+        var heads: [String] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            guard let raw = sqlite3_column_text(statement, 0) else { continue }
+            let head = String(cString: raw).lowercased()
+            guard head.allSatisfy({ $0.isLetter }), head.count > 2, !excluded.contains(head) else { continue }
+            heads.append(head)
+        }
+        return heads
+    }
+
+    /// The ingredient groups the correlation engine tracks — "dairy",
+    /// "gluten", "allium" — read from the database rather than restated here,
+    /// so the questions people ask about triggers use the engine's own words.
+    static func loadTags(from url: URL) throws -> [String] {
+        var handle: OpaquePointer?
+        guard sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
+              let db = handle
+        else { throw CorpusError.cannotOpenDatabase(url.path) }
+        defer { sqlite3_close(db) }
+
+        var statement: OpaquePointer?
+        defer { sqlite3_finalize(statement) }
+        guard sqlite3_prepare_v2(db, "SELECT DISTINCT tag FROM food_tags ORDER BY tag", -1, &statement, nil) == SQLITE_OK else {
+            throw CorpusError.queryFailed(String(cString: sqlite3_errmsg(db)))
+        }
+        var tags: [String] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            if let raw = sqlite3_column_text(statement, 0) { tags.append(String(cString: raw)) }
+        }
+        return tags
     }
 
     /// "Rice, white, cooked" → "cooked white rice".

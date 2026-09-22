@@ -45,6 +45,7 @@ struct LogSheet<Content: View>: View {
             .background(Palette.ground)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            .vesselSheetBar()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }

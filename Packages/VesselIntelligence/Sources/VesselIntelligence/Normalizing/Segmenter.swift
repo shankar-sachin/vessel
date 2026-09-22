@@ -73,7 +73,7 @@ public enum Segmenter {
             let isSeparator: Bool
             if protected.contains(index) {
                 isSeparator = false
-            } else if separators.contains(token) {
+            } else if separators.contains(token) || token == TextNormalizer.boundary {
                 isSeparator = true
             } else if token == "with" {
                 let next = index + 1 < tokens.count ? tokens[index + 1] : ""

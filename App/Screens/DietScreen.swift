@@ -151,25 +151,33 @@ struct FoodEntryCard: View {
                         .font(Typography.caption)
                         .foregroundStyle(Palette.inkTertiary)
                     Spacer()
-                    Image(systemName: entry.source.symbol)
-                        .font(.caption)
-                        .foregroundStyle(Palette.inkTertiary)
-                        .accessibilityHidden(true)
+                    // A meal's total, when there is more than one line to add up.
+                    if entry.resolvedItems.count > 1 {
+                        Text("\(Int(entry.resolvedItems.reduce(0) { $0 + $1.nutrients.kilocalories }.rounded())) kcal")
+                            .font(Typography.caption)
+                            .foregroundStyle(Palette.inkTertiary)
+                    }
                 }
 
                 ForEach(entry.resolvedItems) { item in
+                    let name = FoodName(item.displayName)
                     HStack(alignment: .firstTextBaseline, spacing: Layout.sm) {
-                        Text(item.displayName)
-                            .font(Typography.body)
-                            .foregroundStyle(Palette.ink)
-                        Text(item.quantityDescription)
-                            .font(Typography.caption)
-                            .foregroundStyle(Palette.inkTertiary)
-                        Spacer(minLength: Layout.xs)
-                        Text("\(Int(item.nutrients.kilocalories)) kcal")
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(name.title)
+                                .font(Typography.body)
+                                .foregroundStyle(Palette.ink)
+                            Text([name.detail, item.quantityDescription].compactMap { $0 }.joined(separator: " · "))
+                                .font(Typography.caption)
+                                .foregroundStyle(Palette.inkTertiary)
+                                .lineLimit(1)
+                        }
+                        Spacer(minLength: Layout.sm)
+                        Text("\(Int(item.nutrients.kilocalories.rounded())) kcal")
                             .font(Typography.numeric)
                             .foregroundStyle(Palette.inkSecondary)
+                            .monospacedDigit()
                     }
+                    .accessibilityElement(children: .combine)
                 }
 
                 // The verbatim input, shown when we parsed rather than were told —

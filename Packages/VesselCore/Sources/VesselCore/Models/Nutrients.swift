@@ -211,4 +211,16 @@ public enum MeasurementUnit: String, Codable, Sendable, CaseIterable {
         case .pinch: return "pinch"
         }
     }
+
+    /// The short name, pluralised where English does — "2 servings", not
+    /// "2 serving". Abbreviations never take a plural.
+    public func shortName(for quantity: Double) -> String {
+        guard quantity != 1 else { return shortName }
+        switch self {
+        case .cup, .item, .slice, .serving: return shortName + "s"
+        case .handful: return "handfuls"
+        case .pinch: return "pinches"
+        default: return shortName
+        }
+    }
 }

@@ -67,7 +67,8 @@ public struct EntryResolver: Sendable {
         // Search on the food words plus any preparation, since "grilled
         // chicken" and "fried chicken" are different rows with different fat.
         let query = (parsed.preparation + [parsed.phrase]).joined(separator: " ")
-        let matches = search.search(query, limit: 6)
+        let ranked = search.search(query, limit: 6)
+        let matches = Self.preferringMeasurable(ranked)
 
         guard let best = matches.first else {
             return ResolvedFood(
@@ -122,7 +123,29 @@ public struct EntryResolver: Sendable {
     }
 
     /// When no unit was spoken, use the food's own default measure.
+    ///
+    /// Always a serving, never grams. A bare count — "a quarter of a melon",
+    /// "two eggs" — counts things, and reading it as grams turned a quarter of
+    /// a melon into 0.25 g whenever the chosen row had no portion data.
+    /// `PortionResolver` already falls back to 100 g a serving, flagged as an
+    /// estimate, when there is nothing better.
     private func defaultUnit(for food: FoodRecord) -> MeasurementUnit {
-        food.defaultPortion != nil ? .serving : .gram
+        .serving
+    }
+
+    /// Moves a row that has real portions ahead of one that doesn't, when the
+    /// two are all but tied.
+    ///
+    /// The search ranks what a food *is*; the resolver also needs to know what
+    /// one *weighs*. "Melons, honeydew, raw" and "Melons, cantaloupe, raw" are
+    /// equally good answers to "melon", but only cantaloupe carries portion
+    /// data, so only it can turn "a quarter" into grams without guessing.
+    static func preferringMeasurable(_ matches: [FoodMatch]) -> [FoodMatch] {
+        guard let top = matches.first, top.food.defaultPortion == nil,
+              let measurable = matches.first(where: {
+                  $0.food.defaultPortion != nil && $0.score >= top.score - 0.03
+              })
+        else { return matches }
+        return [measurable] + matches.filter { $0.id != measurable.id }
     }
 }

@@ -59,6 +59,23 @@ public struct FoodRecord: Sendable, Identifiable, Hashable {
         self.isStaple = isStaple
     }
 
+    /// The name as a person should read it.
+    ///
+    /// USDA's "not specified" clauses are how the survey recorded someone who
+    /// didn't say — "Chicken, NS as to part and cooking method, NS as to skin
+    /// eaten" is simply chicken. The search prefers those rows for exactly that
+    /// reason, so their names must not reach the screen as written.
+    public var displayName: String {
+        let clauses = name.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        let kept = clauses.enumerated().compactMap { index, clause -> String? in
+            if index == 0 { return clause }
+            if clause.contains("NS as to") || clause == "NFS" { return nil }
+            // "white or NFS" → "white".
+            return clause.replacingOccurrences(of: " or NFS", with: "")
+        }
+        return kept.joined(separator: ", ")
+    }
+
     /// Nutrition for an actual weight.
     public func nutrients(forGrams grams: Double) -> Nutrients {
         nutrientsPer100g.scaled(by: grams / 100)

@@ -128,13 +128,19 @@ private struct ModuleScreen: View {
     let module: AppModule
 
     var body: some View {
-        switch module {
-        case .today:   TodayScreen()
-        case .diet:    DietScreen()
-        case .water:   WaterScreen()
-        case .journal: JournalScreen()
-        case .dateLog: DateLogScreen()
+        Group {
+            switch module {
+            case .today:   TodayScreen()
+            case .diet:    DietScreen()
+            case .water:   WaterScreen()
+            case .journal: JournalScreen()
+            case .dateLog: DateLogScreen()
+            }
         }
+        // Room for the floating log button. It sits over every screen, and
+        // without this the last row of every list ended under it — a meal's
+        // calories and a journal entry's mood were both cut off.
+        .contentMargins(.bottom, 84, for: .scrollContent)
     }
 }
 

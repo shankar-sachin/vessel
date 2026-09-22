@@ -55,6 +55,13 @@ public final class ParserModels: @unchecked Sendable {
         let runnerUp = hypotheses.filter { $0.key != best.key }.values.max() ?? 0
         let margin = best.value - runnerUp
 
+        // No opinion at all. Every word was unseen, the distribution came
+        // back flat, and "best" is whichever label the dictionary happened to
+        // yield first — a different answer on different runs. Returning nil
+        // hands the decision to the rule-based classifier, which is at least
+        // deterministic and knows the symptom vocabulary.
+        if margin < 0.005 { return nil }
+
         return (best.key, min(1.0, best.value * (0.6 + 0.4 * margin)))
     }
 

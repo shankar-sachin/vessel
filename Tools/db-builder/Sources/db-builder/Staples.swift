@@ -17,7 +17,9 @@ enum Staples {
     static let terms: [String] = [
         // Drinks. Terms are specific enough to resolve to the plain version:
         // a bare "tea" matches "Tea, bubble" just as well as the ordinary kind.
-        "coffee, brewed", "tea, black, brewed", "orange juice, raw",
+        // And specific enough to be *hot*: "tea, black, brewed" resolved to
+        // iced tea, which then outranked every hot tea for a bare "tea".
+        "coffee, brewed", "tea, hot, leaf, black", "orange juice, raw",
         // Dairy and eggs
         "milk, whole", "milk, reduced fat", "yogurt, plain", "cheddar cheese",
         "egg, whole, cooked, scrambled",

@@ -75,7 +75,7 @@ public enum FoodVariants {
     }
 
     public static func distinguishingLabel(for food: FoodRecord, term: String) -> String {
-        let name = food.name
+        let name = food.displayName
         let parts = name.components(separatedBy: ", ")
 
         if parts.count > 1, parts[0].lowercased() == term.lowercased() {

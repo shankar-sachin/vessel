@@ -25,6 +25,13 @@ public struct TextNormalizer: Sendable {
         public let text: String
         /// Tokens of `text`.
         public let tokens: [String]
+        /// Indices into `tokens` that followed a comma or semicolon.
+        ///
+        /// Kept out of the tokens themselves because the models were never
+        /// trained on punctuation, and not rewritten as "and" because a comma
+        /// also marks a pause ("um, like") or a trailing detail ("eggs,
+        /// scrambled"). Assembly uses these only to split two food spans.
+        public var boundaries: Set<Int> = []
         /// Separate foods found in the utterance.
         public let segments: [String]
         /// When the user said this happened, if they said.
@@ -88,22 +95,49 @@ public struct TextNormalizer: Sendable {
         let time = timeParser.parse(tokens: tokens, now: now)
         if let time {
             tokens.removeSubrange(time.range)
+            // A time phrase can stand in front of the lead-in: "for breakfast i
+            // had yoghurt". With the time gone, "i had" now opens the sentence
+            // and is filler like any other lead-in.
+            if time.range.lowerBound == 0 {
+                tokens = Self.stripPhrases(Self.leadIns, from: tokens, atStart: true)
+            }
         }
 
         tokens = tokens.filter { !Self.fillers.contains($0) }
         tokens = Self.canonicaliseNumbers(tokens)
 
+        let segments = Segmenter.split(tokens: tokens)
+        let boundaries: Set<Int>
+        (tokens, boundaries) = Self.extractBoundaries(tokens)
         let text = tokens.joined(separator: " ")
 
-        return Result(
+        var result = Result(
             text: text,
             tokens: tokens,
-            segments: Segmenter.split(tokens: tokens),
+            segments: segments,
             occurredAt: time?.date,
             slot: time?.slot,
             timeIsApproximate: time?.isApproximate ?? false,
             original: original
         )
+        result.boundaries = boundaries
+        return result
+    }
+
+    /// Lifts comma markers out of the tokens, remembering which token each
+    /// one preceded. Leading, trailing and repeated commas mark nothing.
+    static func extractBoundaries(_ tokens: [String]) -> ([String], Set<Int>) {
+        var words: [String] = []
+        var boundaries = Set<Int>()
+        for token in tokens {
+            if token == boundary {
+                if !words.isEmpty { boundaries.insert(words.count) }
+            } else {
+                words.append(token)
+            }
+        }
+        boundaries.remove(words.count)
+        return (words, boundaries)
     }
 
     // MARK: - Pieces
@@ -113,7 +147,10 @@ public struct TextNormalizer: Sendable {
     /// Slashes, colons, decimal points and vulgar fractions survive because
     /// "1/2", "8:30", "1.5" and "½" are single meaningful tokens. Apostrophes
     /// are dropped so "I'm" becomes "im" rather than two tokens.
-    static func tokenize(_ text: String) -> [String] {
+    /// Stands in for a comma until `extractBoundaries` lifts it out.
+    static let boundary = ","
+
+    public static func tokenize(_ text: String) -> [String] {
         let lowered = text.lowercased()
             .folding(options: .diacriticInsensitive, locale: nil)
             .replacingOccurrences(of: "'", with: "")
@@ -122,13 +159,20 @@ public struct TextNormalizer: Sendable {
         var tokens: [String] = []
         var current = ""
 
-        for character in lowered {
+        let characters = Array(lowered)
+        for (index, character) in characters.enumerated() {
+            // "1,000" is one number, not a list.
+            if character == ",", index > 0, index + 1 < characters.count,
+               characters[index - 1].isNumber, characters[index + 1].isNumber {
+                continue
+            }
             if character.isLetter || character.isNumber
                 || character == "/" || character == ":" || character == "."
                 || character == "-" || NumberParser.vulgarFractions[character] != nil {
                 current.append(character)
             } else {
                 if !current.isEmpty { tokens.append(current); current = "" }
+                if character == "," || character == ";" { tokens.append(Self.boundary) }
             }
         }
         if !current.isEmpty { tokens.append(current) }
@@ -136,7 +180,21 @@ public struct TextNormalizer: Sendable {
         // A trailing period is sentence punctuation, not a decimal point.
         return tokens.map { token in
             token.hasSuffix(".") ? String(token.dropLast()) : token
-        }.filter { !$0.isEmpty }
+        }
+        .filter { !$0.isEmpty }
+        .flatMap(splitGluedUnit)
+    }
+
+    /// "300ml" → "300", "ml". Only when the suffix is a unit, so "8am" stays
+    /// whole for the time parser and "2nd" stays an ordinal.
+    static func splitGluedUnit(_ token: String) -> [String] {
+        guard let first = token.first, first.isNumber,
+              let split = token.firstIndex(where: \.isLetter) else { return [token] }
+        let number = String(token[..<split])
+        let suffix = String(token[split...])
+        guard UnitVocabulary.unit(for: suffix) != nil,
+              number.allSatisfy({ $0.isNumber || $0 == "." }) else { return [token] }
+        return [number, suffix]
     }
 
     /// Removes the first matching phrase from the start or end.

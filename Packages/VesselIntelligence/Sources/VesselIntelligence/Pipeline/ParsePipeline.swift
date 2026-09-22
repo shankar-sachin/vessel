@@ -58,11 +58,19 @@ public struct ParsePipeline: Sendable {
 
         switch intent {
         case .logFood, .correction:
-            entry.foods = assembleFoods(from: tagged, segments: normalized.segments, protected: protected)
+            entry.foods = assembleFoods(from: tagged, segments: normalized.segments, protected: protected,
+                                        boundaries: normalized.boundaries)
+            // "toast and a coffee" is a meal that also names a drink; the sheet
+            // saves both, but only if the drink was assembled at all.
+            entry.drinks = assembleDrinks(from: tagged, boundaries: normalized.boundaries)
         case .logWater:
-            entry.drinks = assembleDrinks(from: tagged)
-            // "a coffee and a biscuit" is both a drink and a food.
-            entry.foods = assembleFoods(from: tagged, segments: normalized.segments, protected: protected)
+            entry.drinks = assembleDrinks(from: tagged, boundaries: normalized.boundaries)
+            // "a coffee and a biscuit" is both a drink and a food. Only foods
+            // the tagger actually found, though: the segment fallback turned
+            // "bottle of water after my run" into a *food* spanning the whole
+            // sentence, which the resolver dutifully matched to tonic water.
+            entry.foods = assembleFoods(from: tagged, segments: [], protected: protected,
+                                        boundaries: normalized.boundaries)
         case .logSymptom:
             entry.symptom = assembleSymptom(from: tagged)
         case .journalEntry, .query, .unknown:
@@ -108,7 +116,8 @@ public struct ParsePipeline: Sendable {
     private func assembleFoods(
         from tagged: [Tagged],
         segments: [String],
-        protected: Set<Int>
+        protected: Set<Int>,
+        boundaries: Set<Int>
     ) -> [ParsedFood] {
         var foods: [ParsedFood] = []
         var current: ParsedFood?
@@ -117,6 +126,9 @@ public struct ParsePipeline: Sendable {
         var pendingPrep: [String] = []
         var pendingBrand: String?
         var negateNext = false
+        // Set when a word that isn't part of a food name follows the current
+        // food, so the next food word starts a new one.
+        var brokeSinceLastFood = false
 
         func flush() {
             if var food = current, !food.phrase.isEmpty {
@@ -166,6 +178,13 @@ public struct ParsePipeline: Sendable {
                 negateNext = true
 
             case "FOOD":
+                if current != nil, brokeSinceLastFood || boundaries.contains(index) {
+                    // "baguette with butter" is two foods. The tagger labels
+                    // "with" NONE; appending straight past it made one phrase
+                    // that the resolver matched to butter, losing the baguette.
+                    flush()
+                }
+                brokeSinceLastFood = false
                 if current == nil {
                     current = ParsedFood(
                         phrase: item.token,
@@ -186,6 +205,8 @@ public struct ParsePipeline: Sendable {
                    !protected.contains(index),
                    ["and", "plus", "then", "also"].contains(item.token) {
                     flush()
+                } else if current != nil, !protected.contains(index) {
+                    brokeSinceLastFood = true
                 }
             }
         }
@@ -199,27 +220,44 @@ public struct ParsePipeline: Sendable {
         return foods
     }
 
-    private func assembleDrinks(from tagged: [Tagged]) -> [ParsedDrink] {
+    private static let drinkEdgeWords: Set<String> = ["with", "my", "of", "a", "an", "the", "some", "and"]
+
+    private func assembleDrinks(from tagged: [Tagged], boundaries: Set<Int>) -> [ParsedDrink] {
         var drinks: [ParsedDrink] = []
         var quantity: Double?
         var unit: MeasurementUnit?
         var name: [String] = []
+        // The container word, kept apart from the name: it says how much, and
+        // `DrinkVolume` needs it to tell a bottle from a glass.
+        var vessel: String?
 
         func flush() {
+            // The tagger sometimes lets the words around a drink into it
+            // ("a beer with", "with my tea"). None of them can begin or end a
+            // drink's name.
+            while let first = name.first, Self.drinkEdgeWords.contains(first) { name.removeFirst() }
+            while let last = name.last, Self.drinkEdgeWords.contains(last) { name.removeLast() }
+            // Nothing named yet: keep any quantity and vessel for the drink that
+            // follows, as in "bottle of water".
             guard !name.isEmpty else { return }
             let joined = name.joined(separator: " ")
             drinks.append(ParsedDrink(
                 name: joined,
                 quantity: quantity,
                 unit: unit,
-                millilitres: DrinkVolume.millilitres(quantity: quantity, unit: unit, name: joined)
+                millilitres: DrinkVolume.millilitres(
+                    quantity: quantity, unit: unit,
+                    name: [vessel, joined].compactMap { $0 }.joined(separator: " ")
+                )
             ))
             name = []
             quantity = nil
             unit = nil
+            vessel = nil
         }
 
-        for item in tagged {
+        for (index, item) in tagged.enumerated() {
+            if boundaries.contains(index) { flush() }
             switch item.label {
             case "QTY":
                 flush()
@@ -227,10 +265,19 @@ public struct ParsePipeline: Sendable {
                     ?? NumberParser.parse(tokens: [item.token])?.quantity.value
             case "UNIT":
                 unit = UnitVocabulary.unit(for: item.token)
+                vessel = item.token
             case "DRINK":
-                name.append(item.token)
+                if name.isEmpty, let asUnit = UnitVocabulary.unit(for: item.token) {
+                    vessel = item.token
+                    // "glass of water" tagged DRINK throughout: the glass is how
+                    // much, not what. Leaving it in the name also lost the 250 ml.
+                    unit = asUnit
+                } else {
+                    name.append(item.token)
+                }
             default:
-                break
+                // "a beer with dinner" — whatever follows the drink is not it.
+                flush()
             }
         }
         flush()
