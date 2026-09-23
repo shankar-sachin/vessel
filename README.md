@@ -26,6 +26,11 @@ Everything runs on your device. There is no account, no server, and no
 telemetry. The only network call Vessel ever makes is a barcode lookup you
 explicitly ask for.
 
+**[Website](https://shankar-sachin.github.io/vessel/)** ·
+**[Wiki: how to use Vessel](https://shankar-sachin.github.io/vessel/wiki/)** ·
+**[Install it](#install)** · [Privacy](https://shankar-sachin.github.io/vessel/privacy/) ·
+[Support](https://shankar-sachin.github.io/vessel/support/)
+
 **Contents** — [What it does](#what-it-does) · [The parser](#the-parser) ·
 [The food database](#the-food-database) · [Your data](#your-data) ·
 [Building](#building) · [Status](#status) · [Licence](#licence)
@@ -174,6 +179,23 @@ rules so enabling it later is a two-line change.
 
 ---
 
+<a id="install"></a>
+## Install
+
+Vessel is on its way to the App Store. Until then, install it on your own
+iPhone with one command — on a Mac with Xcode 26+, signed in to your Apple ID
+(a free one works), with the phone plugged in:
+
+```sh
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/shankar-sachin/vessel/main/scripts/install.sh)"
+```
+
+It installs XcodeGen if needed, clones to `~/vessel`, signs with your own team
+and installs on the connected device. Free Apple IDs expire apps after 7 days;
+run it again to renew — your diary is kept. The
+[wiki](https://shankar-sachin.github.io/vessel/wiki/#install) has the manual
+steps.
+
 ## Building
 
 Requires Xcode 26 or later. The Xcode project is **generated** — `project.yml`
@@ -184,6 +206,22 @@ brew install xcodegen
 xcodegen generate
 open Vessel.xcodeproj
 ```
+
+### Checking a build
+
+| Script | |
+|---|---|
+| `scripts/test-all.sh` | Every package's tests, then iPhone, iPad and Watch builds — fails on any compiler warning. `--release` adds an App Store archive (and checks the privacy manifests ship); `--ui` adds the UI suite. |
+| `scripts/check-metadata.sh` | Asserts every Siri intent, entity, enum and App Shortcut is in the metadata the system reads. |
+| `scripts/screenshots.sh` | Clean-installs, drives the UI suite and exports every screenshot under its name into `build/screenshots/`, plus the watch pages. |
+| `scripts/rebuild-db.sh` | Rebuilds `foods.sqlite` from the USDA CSVs (or `--reindex`) and runs the search-quality tests. |
+| `scripts/retrain.sh` | Regenerates the corpus, retrains both models and grades them twice on the hand-written eval. |
+| `scripts/install.sh` | The one-command install above. |
+
+Simulators are looked up by name; override with `VESSEL_IPHONE`, `VESSEL_IPAD`, `VESSEL_WATCH`.
+
+The website, wiki, privacy policy and support page are plain HTML in `docs/`,
+served by GitHub Pages from `main`.
 
 Targets iOS/iPadOS 18 and watchOS 11, with a fuller experience on 26+ (on-device foundation
 models as a parsing fallback, streaming transcription, Liquid Glass). iOS 18 is
@@ -206,7 +244,7 @@ a complete app, not a crippled one.
 `StreakWidget/` the Live Activity.
 
 Build-time tools in `Tools/` regenerate the food database and retrain the
-parser; see `CLAUDE.md` for the exact commands and the traps worth knowing about.
+parser; `scripts/rebuild-db.sh` and `scripts/retrain.sh` run them end to end.
 
 ---
 
@@ -220,8 +258,8 @@ Also: iPad (multi-window, keyboard shortcuts, drag and drop), a standalone
 Apple Watch app, an accessibility pass, and an iOS 18 tier that is tested as a
 whole app rather than assumed to work.
 
-**Not yet verified on hardware:** voice transcription, the Dynamic Island's
-rendering, Siri itself, and the watch talking to a real phone. All are implemented and tested up to the system
+**Verified on hardware:** the Dynamic Island. **Not yet:** voice
+transcription, Siri itself, and the watch talking to a real phone. All are implemented and tested up to the system
 boundary — every intent's `perform()` runs in the test suite, and the build's
 extracted metadata lists each intent, entity and phrase — but a simulator has
 no microphone, doesn't render Live Activity content reliably, and its Siri

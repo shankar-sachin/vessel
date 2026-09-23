@@ -594,35 +594,17 @@ private struct UpgradeCard: View {
                 }
                 .padding(.top, Layout.xs)
 
-                Button {
-                    openSoftwareUpdate()
-                } label: {
-                    Label("Open Software Update", systemImage: "arrow.down.circle")
-                        .font(Typography.bodyEmphasis)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Layout.sm)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Palette.diet)
-                .padding(.top, Layout.sm)
-                .accessibilityIdentifier("openSoftwareUpdate")
+                // Directions rather than a button: no public URL opens Software
+                // Update, and the private `App-prefs:` one is grounds for App
+                // Review rejection. `openSettingsURLString` would land on
+                // Vessel's own settings page, which is the wrong screen.
+                Label("Settings → General → Software Update", systemImage: "arrow.down.circle")
+                    .font(Typography.bodyEmphasis)
+                    .foregroundStyle(Palette.ink)
+                    .padding(.top, Layout.sm)
+                    .accessibilityLabel("To update, open Settings, then General, then Software Update")
+                    .accessibilityIdentifier("softwareUpdateHint")
             }
-        }
-    }
-
-    /// Opens Settings → General → Software Update.
-    ///
-    /// There is no public URL for that screen. `App-prefs:` reaches it today
-    /// but is undocumented, and App Review can reject apps that use it — so if
-    /// Vessel ships to the App Store this should become the public
-    /// `openSettingsURLString`, which opens the Settings app instead. When the
-    /// private link is refused, that's what happens already.
-    private func openSoftwareUpdate() {
-        let direct = URL(string: "App-prefs:General&path=SOFTWARE_UPDATE_LINK")
-        let settings = URL(string: UIApplication.openSettingsURLString)
-        guard let direct else { return }
-        UIApplication.shared.open(direct) { opened in
-            if !opened, let settings { UIApplication.shared.open(settings) }
         }
     }
 }

@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vessel Wiki</title>
+<meta name="description" content="How to use Vessel: logging food, water, journal entries and reactions, finding patterns, Siri, Apple Watch, iPad, backups, tips and troubleshooting.">
+<meta name="theme-color" content="#FAF6F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="../assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#wiki">Skip to the wiki</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../assets/logo.png" alt="" width="30" height="30">Vessel</a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="./" aria-current="page">Wiki</a>
+      <a class="opt" href="../privacy/">Privacy</a>
+      <a href="../support/">Support</a>
+    </nav>
+  </div>
+</header>
+
+<div class="doc-hero">
+  <div class="wrap">
+    <p class="eyebrow">The Vessel wiki</p>
+    <h1>Everything Vessel does, and how to get the most from it</h1>
+    <p>Start with <a href="#first-day">your first day</a> if you’re new. Every section stands on its own, so jump to whatever you need, or search.</p>
+  </div>
+</div>
+
+<div class="wrap doc-layout">
+
+  <aside class="toc" aria-label="Wiki contents">
+    <label for="guide-search" class="eyebrow">Search the wiki</label>
+    <input id="guide-search" type="search" placeholder="e.g. backup, milk, streak" autocomplete="off">
+    <details open>
+      <summary>Contents</summary>
+      <ol id="toc-list">
+        <li class="group">Start here</li>
+        <li><a href="#first-day">Your first day</a></li>
+        <li><a href="#today">Today</a></li>
+        <li class="group">Logging</li>
+        <li><a href="#quick-log" style="--c:var(--diet)">Quick log</a></li>
+        <li><a href="#reading-the-parse" style="--c:var(--diet)">Checking what Vessel read</a></li>
+        <li><a href="#search" style="--c:var(--diet)">Searching for a food</a></li>
+        <li><a href="#photos" style="--c:var(--diet)">Photos and barcodes</a></li>
+        <li><a href="#voice" style="--c:var(--diet)">Speaking instead of typing</a></li>
+        <li><a href="#diet" style="--c:var(--diet)">The Diet Tracker</a></li>
+        <li><a href="#water" style="--c:var(--water)">The Water Diary</a></li>
+        <li><a href="#journal" style="--c:var(--journal)">The Journal</a></li>
+        <li><a href="#date-log" style="--c:var(--symptom)">The Date Log</a></li>
+        <li class="group">Understanding it</li>
+        <li><a href="#patterns" style="--c:var(--symptom)">Patterns in your log</a></li>
+        <li><a href="#streaks" style="--c:var(--streak)">Streaks and eating patterns</a></li>
+        <li><a href="#reminders" style="--c:var(--streak)">Reminders and the Dynamic Island</a></li>
+        <li class="group">Everywhere else</li>
+        <li><a href="#siri">Siri and Shortcuts</a></li>
+        <li><a href="#watch">Apple Watch</a></li>
+        <li><a href="#ipad">iPad and keyboards</a></li>
+        <li class="group">Your data</li>
+        <li><a href="#backup">Backup, export and new phones</a></li>
+        <li><a href="#settings">Settings, in full</a></li>
+        <li><a href="#accessibility">Accessibility</a></li>
+        <li class="group">Help</li>
+        <li><a href="#tips">Tips</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+        <li><a href="#faq">Questions</a></li>
+        <li class="group">Run it yourself</li>
+        <li><a href="#install">Install on your own iPhone</a></li>
+        <li><a href="#install-watch">Install on Apple Watch</a></li>
+        <li><a href="#keep-running">Keeping it installed</a></li>
+        <li><a href="#host-site">Host your own copy</a></li>
+      </ol>
+    </details>
+  </aside>
+
+  <article class="prose" id="wiki">
+    <p class="no-results" id="no-results">Nothing in the wiki matches that. Try a single word, such as “water” or “backup”.</p>
+
+    <!-- ===================================================== START HERE -->
+
+    <section id="first-day" style="--c:var(--streak)">
+      <h2>Your first day</h2>
+      <p>Vessel has no sign-up. Open it and you’re on <strong>Today</strong>, with five sections along the bottom (or down the side on iPad):</p>
+      <div class="table-wrap"><table>
+        <tr><th>Section</th><th>What it holds</th></tr>
+        <tr><td>Today</td><td>Your day at a glance: streak, energy, hydration, and what you’ve logged.</td></tr>
+        <tr><td>Diet</td><td>Everything you ate and drank, other than water, with its nutrition.</td></tr>
+        <tr><td>Water</td><td>Water, against a daily goal.</td></tr>
+        <tr><td>Journal</td><td>Notes about the day, with an optional mood.</td></tr>
+        <tr><td>Date Log</td><td>Reactions: how your body responded, and when it started.</td></tr>
+      </table></div>
+      <p>Three things are worth doing in the first five minutes:</p>
+      <ol>
+        <li><strong>Tell Vessel how you eat.</strong> Tap the gear on Today, then <span class="path">Streak → Eating pattern</span>. Three meals a day is the default; pick two meals, one meal, time-restricted or your own number if that’s closer to your life. The streak follows your pattern, not the other way round.</li>
+        <li><strong>Set your goals.</strong> In the same Settings screen, <span class="path">Daily goals</span> holds energy, protein, carbohydrate, fat and water. Leave them as they are if you don’t track closely; they only colour the rings.</li>
+        <li><strong>Log something.</strong> Tap <em>Describe a meal…</em> on Today and type what you last ate, the way you’d say it to a friend: <em>“two eggs and toast this morning”</em>.</li>
+      </ol>
+      <div class="callout tip"><b>The one habit that matters</b><span>If you only log one extra thing, make it reactions, logged with the time they <em>started</em>. That’s what lets Vessel connect how you felt to what you ate. Everything else is useful; that’s essential.</span></div>
+    </section>
+
+    <section id="today" style="--c:var(--streak)">
+      <h2>Today</h2>
+      <figure>
+        <div class="phone"><img src="../assets/shots/today.jpg" width="1206" height="2622" loading="lazy" alt="The Today screen."></div>
+        <figcaption>Today, part-way through a day: the streak ring at the top, energy and hydration beneath it, then the meals logged so far.</figcaption>
+      </figure>
+      <ul>
+        <li><strong>The streak ring</strong> fills as you log the meals your eating pattern asks for. The number inside is your current streak in days; your best is underneath. When the day is close to ending with meals still missing, it says <em>Streak at risk</em>.</li>
+        <li><strong>Energy</strong> shows calories so far against your goal, with protein, carbohydrate and fat.</li>
+        <li><strong>Hydration</strong> shows water against your goal. If you’ve turned on <em>Count water in food</em>, the water in milk, soup and fruit counts too.</li>
+        <li><strong>Describe a meal…</strong> opens <a href="#quick-log">Quick log</a>. The camera button beside it opens <a href="#photos">From a photo</a>.</li>
+        <li><strong>The gear</strong> opens <a href="#settings">Settings</a>.</li>
+      </ul>
+      <p>Tap any meal to open and edit it.</p>
+    </section>
+
+    <!-- ===================================================== LOGGING -->
+
+    <section id="quick-log" style="--c:var(--diet)">
+      <h2>Quick log</h2>
+      <p>Quick log is one box for everything: meals, drinks, water, reactions and journal notes. Type or say what happened and Vessel works out which it is.</p>
+      <figure>
+        <div class="phone"><img src="../assets/shots/quick-log.jpg" width="1206" height="2622" loading="lazy" alt="Quick log reading a meal."></div>
+        <figcaption>“Two eggs and toast”, read as two foods, each matched to the database with a portion and calories, ready to save.</figcaption>
+      </figure>
+      <h3>What you can say</h3>
+      <div class="table-wrap"><table>
+        <tr><th>You write</th><th>Vessel logs</th></tr>
+        <tr><td>two eggs and toast</td><td>A meal of two foods: eggs × 2, toast</td></tr>
+        <tr><td>half a baguette with butter for lunch</td><td>Lunch: baguette × ½, butter</td></tr>
+        <tr><td>a bowl of porridge with berries</td><td>A meal: porridge, berries</td></tr>
+        <tr><td>large glass of whole milk</td><td>A drink in the Diet log, with milk’s nutrition</td></tr>
+        <tr><td>bottle of water</td><td>500 ml in the Water Diary</td></tr>
+        <tr><td>feeling bloated after lunch</td><td>A reaction in the Date Log</td></tr>
+      </table></div>
+      <h3>Amounts</h3>
+      <p>Numbers can be digits or words, “two and a half”, “a couple of”, “half a”, “a quarter of”. Units can be anything a person uses: cups, slices, spoons, grams, ounces, a bowl, a glass, a handful. When you don’t give an amount, Vessel uses a typical portion and marks the weight as an estimate.</p>
+      <h3>Time</h3>
+      <p>Say when, and Vessel files it there: “this morning”, “for breakfast”, “at lunch”, “last night”, “an hour ago”. Without a time, it’s logged now. You can always change the time before saving.</p>
+      <div class="callout tip"><b>Several things at once</b><span>“Eggs, toast and a coffee” becomes three items in one meal. Keep going in one sentence rather than logging each separately.</span></div>
+    </section>
+
+    <section id="reading-the-parse" style="--c:var(--diet)">
+      <h2>Checking what Vessel read</h2>
+      <p>Nothing is saved until you tap <strong>Save</strong>. Underneath what you typed, <em>Vessel read this as</em> shows exactly what will go into your log:</p>
+      <ul>
+        <li>Each food with the phrase it came from (<em>from “toast”</em>), its weight, and calories. <em>(est.)</em> after a weight means Vessel picked a typical portion.</li>
+        <li>A confidence mark. When Vessel isn’t sure it read you right, it says <strong>Worth checking</strong> and why.</li>
+        <li><strong>Which milk?</strong> Some foods vary so much that guessing would be wrong. Milk runs from 32 to 496 kcal per 100 g depending on the kind. For those, Vessel asks you to pick. It knows 426 such foods.</li>
+        <li><strong>No database match</strong> means the food will be saved with your wording and no nutrition. Use search instead (below) if the numbers matter.</li>
+      </ul>
+      <p>If the reading is wrong, tap <strong>Not reading it right? Search and pick instead.</strong> and choose the foods yourself.</p>
+      <div class="callout note"><b>Why it always asks</b><span>A diary that fills itself in silently is only pleasant while it’s right. When it’s wrong you log food you never ate, and weeks later the patterns are built on it. So the reading is always shown first.</span></div>
+    </section>
+
+    <section id="search" style="--c:var(--diet)">
+      <h2>Searching for a food</h2>
+      <p>From the Diet Tracker, tap <strong>+</strong> to search the food database directly. It holds 11,750 foods from USDA FoodData Central, entirely on your phone, so it works in airplane mode.</p>
+      <ol>
+        <li>Type a word or two. Search puts the ordinary version first: <em>rice</em> finds cooked white rice before rice cakes or rice pudding.</li>
+        <li>Tap a food to open <strong>Portion</strong>. Choose what it’s <em>Measured in</em>, whether that’s cups, slices, grams or a portion USDA lists for that food, and set the amount. The weight and nutrition update as you go.</li>
+        <li>Tap <strong>Add</strong>. Add as many foods as the meal had, then save.</li>
+      </ol>
+      <div class="callout tip"><b>Be specific when it matters</b><span>“Chicken breast, grilled” lands closer than “chicken”. For drinks, “2% milk” or “whole milk” skips the question about which milk.</span></div>
+    </section>
+
+    <section id="photos" style="--c:var(--diet)">
+      <h2>Photos and barcodes</h2>
+      <p>Tap the camera button on Today (or drag a photo onto the Diet log on iPad) to open <strong>From a photo</strong>. Choose a photo, and Vessel reads it on the device, in this order of trust:</p>
+      <ol>
+        <li><strong>A barcode</strong> gives the exact figures from the product’s label, looked up in Open Food Facts. You can also type the barcode number into <em>Or type a barcode</em> and tap <strong>Look up</strong>.</li>
+        <li><strong>Text on the packaging</strong> usually names the product outright.</li>
+        <li><strong>The food itself</strong>: Vessel guesses what’s on the plate and how many things it can see. <em>Tap the ones that are right.</em> These are starting points, not measurements, so check the portions.</li>
+      </ol>
+      <p>Each suggestion shows what Vessel saw and how sure it is, so a guess never looks as certain as a scanned label.</p>
+    </section>
+
+    <section id="voice" style="--c:var(--diet)">
+      <h2>Speaking instead of typing</h2>
+      <p>Tap the microphone in Quick log and talk. Tap again to stop. What you said appears as text, and you check and save it exactly as if you’d typed it.</p>
+      <p>Speech is turned into text <strong>on your device</strong>. If your iPhone can’t do that for your language, Vessel won’t send your voice to a server instead. It tells you so, and you can type.</p>
+      <p>The first time, iOS asks for the microphone and for speech recognition. Both are needed. If you declined, turn them back on in <span class="path">Settings → Vessel</span>.</p>
+    </section>
+
+    <section id="diet" style="--c:var(--diet)">
+      <h2>The Diet Tracker</h2>
+      <figure>
+        <div class="phone"><img src="../assets/shots/diet.jpg" width="1206" height="2622" loading="lazy" alt="The Diet Tracker."></div>
+        <figcaption>The day’s meals with their calories. Each keeps the words you used, so you can see why it was logged the way it was.</figcaption>
+      </figure>
+      <ul>
+        <li><strong>Edit</strong> a meal by tapping it. Change foods, portions, the time or which meal it was.</li>
+        <li><strong>Delete</strong> by pressing and holding a meal, then <em>Delete</em>.</li>
+        <li>Meals marked <strong>Worth checking</strong> are ones Vessel wasn’t confident about. A quick look now keeps your patterns honest later.</li>
+      </ul>
+      <h3>Drinks are food; water is water</h3>
+      <p>Milk, juice, coffee, tea, smoothies and beer go in the Diet Tracker with their real nutrition, because they have calories. Only water goes in the Water Diary. Tonic and coconut water have calories too, so they’re food.</p>
+      <div class="callout note"><b>Nutrition is kept as logged</b><span>Each item stores the nutrition it had when you logged it. If the food database is corrected in a later update, last year’s meals keep their original numbers.</span></div>
+    </section>
+
+    <section id="water" style="--c:var(--water)">
+      <h2>The Water Diary</h2>
+      <figure>
+        <div class="phone"><img src="../assets/shots/water.jpg" width="1206" height="2622" loading="lazy" alt="The Water Diary."></div>
+        <figcaption>The vessel fills toward your goal, and tells you how much is left to go.</figcaption>
+      </figure>
+      <ul>
+        <li><strong>Glass</strong> (250 ml), <strong>Bottle</strong> (500 ml) and <strong>Large</strong> (750 ml) are one tap each. In US units, a glass is 8 fl oz.</li>
+        <li><strong>Custom amount</strong> takes any volume, at any time earlier today.</li>
+        <li>Press and hold an entry to edit or delete it.</li>
+        <li>Your goal is in <span class="path">Settings → Daily goals → Water</span>.</li>
+      </ul>
+      <p>Turn on <span class="path">Settings → Units → Count water in food</span> to include the water in everything else you log: milk, soup, fruit, coffee. The Water Diary still lists only water; the hydration total includes both.</p>
+    </section>
+
+    <section id="journal" style="--c:var(--journal)">
+      <h2>The Journal</h2>
+      <p>Tap <strong>New entry</strong>. Give it a title if you like (it’s optional), and write in <em>How was today?</em>. Turn on <strong>Record a mood</strong> to add one of five: Low, Subdued, Steady, Good, Great.</p>
+      <p>Entries are set in a serif face because they’re meant to be read back. Press and hold one to edit or delete it.</p>
+      <div class="callout tip"><b>Write what the numbers miss</b><span>Stress, sleep, a long run, a new medication. You’ll want those later when a pattern needs explaining. Your journal is also available to Apple Intelligence through the system’s journaling support.</span></div>
+    </section>
+
+    <section id="date-log" style="--c:var(--symptom)">
+      <h2>The Date Log</h2>
+      <p>The Date Log records how your body reacted after eating. Tap <strong>Log reaction</strong>, or just say it in Quick log: <em>“bad heartburn since about eight”</em>.</p>
+      <figure>
+        <div class="phone"><img src="../assets/shots/date-log.jpg" width="1206" height="2622" loading="lazy" alt="The Date Log."></div>
+        <figcaption>Reactions with their severity and how long they lasted, and, once there’s enough history, what your log suggests.</figcaption>
+      </figure>
+      <h3>What happened</h3>
+      <p>The common reactions are shown first; <strong>More symptoms</strong> reveals the rest. There are eighteen: bloating, gas, cramping or pain, nausea, heartburn or reflux, diarrhea, constipation, urgency, headache, fatigue, brain fog, skin flare-up, itching, congestion, joint pain, racing heart, and other.</p>
+      <h3>How strong</h3>
+      <p>Each step on the scale says what it means, so a “moderate” on Monday means the same as one on Friday:</p>
+      <div class="table-wrap"><table>
+        <tr><th>Severity</th><th>Means</th></tr>
+        <tr><td>Barely there</td><td>I only notice it if I think about it</td></tr>
+        <tr><td>Mild</td><td>Present, but I can ignore it</td></tr>
+        <tr><td>Moderate</td><td>Hard to ignore, but I carried on</td></tr>
+        <tr><td>Disruptive</td><td>It changed what I did</td></tr>
+        <tr><td>Severe</td><td>I had to stop what I was doing</td></tr>
+      </table></div>
+      <h3>When: the part that matters most</h3>
+      <p>Set <strong>Started</strong> to when you first noticed it, not when you got round to logging it. Vessel looks at what you ate in the hours <em>before</em> the start time. A reaction that began at 9:40 pm but was logged at 11:05 pm needs 9:40 pm.</p>
+      <p>Turn on <strong>Track how long it lasted</strong> if duration helps you, and use the note for anything worth remembering.</p>
+    </section>
+
+    <!-- ===================================================== UNDERSTANDING -->
+
+    <section id="patterns" style="--c:var(--symptom)">
+      <h2>Patterns in your log</h2>
+      <p>At the top of the Date Log, <strong>What your log suggests</strong> appears once there’s enough history to say something honestly. A finding reads like:</p>
+      <div class="callout"><b style="font-family:var(--serif);font-size:1.2rem;font-weight:500">Dairy → Bloating</b><span>7 of 9 occasions, typical onset 3.5 h. Usually bloating follows 18% of your meals; after dairy, 78%.</span></div>
+      <p>Read it as: of the nine times you had dairy, bloating followed seven. After your other meals it follows about one in five. “Typical onset” is how long after eating it usually started.</p>
+      <h3>How Vessel decides</h3>
+      <p>Vessel groups your foods by what’s in them (dairy, gluten, allium, nightshade and others) and compares two things for each: how often a reaction followed meals <em>with</em> that ingredient, and how often it followed meals <em>without</em> it.</p>
+      <ul>
+        <li><strong>Six hours.</strong> A meal counts if it was eaten within six hours before the reaction started. Longer windows make everything look related to everything.</li>
+        <li><strong>Meals close together count once.</strong> Food eaten within three hours of other food is one occasion, so grazing doesn’t inflate the count.</li>
+        <li><strong>At least five of each.</strong> An ingredient needs at least five occasions with it and five without before Vessel will name it. Four out of four looks convincing and is about as likely as four coin tosses landing heads.</li>
+        <li><strong>A real difference.</strong> The reaction must follow the ingredient at least one and a half times as often as it follows your other meals, and Vessel must be 90% sure the difference isn’t chance.</li>
+        <li><strong>Things that always come together can’t be separated.</strong> If you only ever have cheese on bread, Vessel can’t tell whether it’s the dairy or the gluten, and it says so rather than choosing.</li>
+      </ul>
+      <p>With fewer than a few weeks of meals, or a history that shows no real difference, you’ll see nothing. That is the right answer; a made-up pattern would be worse than none.</p>
+      <div class="callout note"><b>Not a diagnosis</b><span>These are patterns in your own log. They can help you notice something worth raising with a doctor or dietitian; they can’t tell you what causes it. Don’t cut out a food group on Vessel’s word alone.</span></div>
+    </section>
+
+    <section id="streaks" style="--c:var(--streak)">
+      <h2>Streaks and eating patterns</h2>
+      <p>A day counts toward your streak when you’ve logged the meals your eating pattern asks for. Set it in <span class="path">Settings → Streak → Eating pattern</span>:</p>
+      <div class="table-wrap"><table>
+        <tr><th>Pattern</th><th>To keep the streak</th></tr>
+        <tr><td>Three meals a day</td><td>Log breakfast, lunch and dinner.</td></tr>
+        <tr><td>Two meals a day</td><td>Log any two main meals.</td></tr>
+        <tr><td>One meal a day</td><td>Log your one meal.</td></tr>
+        <tr><td>Time-restricted eating</td><td>Log your meals inside your eating window, such as 16:8 or 18:6.</td></tr>
+        <tr><td>Custom</td><td>Choose your own number of meals.</td></tr>
+      </table></div>
+      <ul>
+        <li><strong>Snacks count as a meal</strong>, under <em>Fine-tuning</em>, lets a snack fill a meal slot.</li>
+        <li><strong>Day resets at</strong> moves the end of your day. If you eat after midnight, set it to 3 or 4 am so a late dinner counts toward the day you’re still living in.</li>
+      </ul>
+    </section>
+
+    <section id="reminders" style="--c:var(--streak)">
+      <h2>Reminders and the Dynamic Island</h2>
+      <p>Under <span class="path">Settings → Reminders</span>:</p>
+      <ul>
+        <li><strong>Remind me before the day ends</strong> sends a notification when meals are still missing. iOS asks for permission the first time you turn it on.</li>
+        <li><strong>Start warning</strong> chooses how many hours before the day resets that happens. The default is four.</li>
+        <li><strong>Countdown in Dynamic Island</strong> shows the time left on the Lock Screen and in the Dynamic Island, and tapping it opens Vessel.</li>
+      </ul>
+      <p>The notification is guaranteed. The countdown starts the next time iOS gives Vessel a moment to run, which is usually but not always on time, so keep the notification on if the streak matters to you.</p>
+    </section>
+
+    <!-- ===================================================== EVERYWHERE -->
+
+    <section id="siri">
+      <h2>Siri and Shortcuts</h2>
+      <p>These work straight away with no setup. Say “Hey Siri” and then:</p>
+      <div class="table-wrap"><table>
+        <tr><th>Say</th><th>What happens</th></tr>
+        <tr><td>Log a meal in Vessel</td><td>Siri asks what you had; answer as loosely as you like. Also: “Tell Vessel what I ate”.</td></tr>
+        <tr><td>Log a bottle of water in Vessel</td><td>Adds it straight away. Also a glass, a mug or a large bottle, or just “Log water in Vessel”.</td></tr>
+        <tr><td>Log bloating in Vessel</td><td>Any reaction by name, or “Log a reaction in Vessel” to be asked.</td></tr>
+        <tr><td>Add a journal entry in Vessel</td><td>Siri takes down what you say.</td></tr>
+        <tr><td>How am I doing in Vessel</td><td>Your calories, water and meals so far today. Also “Check my day in Vessel”.</td></tr>
+      </table></div>
+      <p>Siri uses the same reader as Quick log. It asks “which milk?” when that changes the numbers, and reads back anything it wasn’t sure about before saving.</p>
+      <p>All of these are also in the <strong>Shortcuts</strong> app, so you can put them on the Home Screen, the Action button or an automation. Logged meals also appear in <strong>Spotlight</strong>, so searching for something you ate takes you straight to that meal.</p>
+    </section>
+
+    <section id="watch">
+      <h2>Apple Watch</h2>
+      <p>Vessel on the watch has three pages. Turn the Digital Crown or swipe between them:</p>
+      <ul>
+        <li><strong>Today</strong>: your streak and how many of today’s meals are logged.</li>
+        <li><strong>Water</strong>: today’s total, with one tap each for a glass, a bottle or a large one.</li>
+        <li><strong>Log</strong>: dictate or scribble what you ate. The watch reads it with the same model as the phone and shows what it found, with calories, before you tap <strong>Log it</strong>.</li>
+      </ul>
+      <p>The watch never keeps a separate diary. It hands what you logged to your iPhone, which saves it, so the two never disagree. <em>Sent to your phone</em> means it’s queued; if your phone is out of range, it goes across the next time they’re together, and is never saved twice.</p>
+    </section>
+
+    <section id="ipad">
+      <h2>iPad and keyboards</h2>
+      <p>On iPad, the sections live in a sidebar, and you can open Vessel in several windows at once, each with its own place. Drag a photo from Photos or Files onto the Diet log to read the food in it.</p>
+      <p>With a keyboard attached (hold <kbd>⌘</kbd> to see them all):</p>
+      <div class="table-wrap"><table>
+        <tr><th>Keys</th><th>Action</th></tr>
+        <tr><td><kbd>⌘</kbd> <kbd>N</kbd></td><td>Quick log</td></tr>
+        <tr><td><kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>W</kbd></td><td>Add water</td></tr>
+        <tr><td><kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>R</kbd></td><td>Log a reaction</td></tr>
+        <tr><td><kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>J</kbd></td><td>New journal entry</td></tr>
+        <tr><td><kbd>⇧</kbd> <kbd>⌘</kbd> <kbd>P</kbd></td><td>Log from a photo</td></tr>
+        <tr><td><kbd>⌘</kbd> <kbd>1</kbd> to <kbd>5</kbd></td><td>Today, Diet, Water, Journal, Date Log</td></tr>
+      </table></div>
+    </section>
+
+    <!-- ===================================================== DATA -->
+
+    <section id="backup">
+      <h2>Backup, export and new phones</h2>
+      <p>Your diary lives only on your device. That’s good for privacy and bad if you lose your phone, so set up a backup on day one. It’s all in Settings, under <span class="path">Automatic backup</span> and <span class="path">Manual</span>.</p>
+      <h3>Automatic backup (recommended)</h3>
+      <ol>
+        <li>Tap <strong>Choose a folder for Vessel…</strong></li>
+        <li>Pick a folder. Choose one in <strong>iCloud Drive</strong> and your backup survives a lost phone.</li>
+        <li>That’s it. Vessel saves a copy each time you leave the app. <strong>Back up now</strong> does it on demand.</li>
+      </ol>
+      <p>Point your iPad at the same folder and each device picks up what the other logged. This is file-level sharing, not live sync: if you edit the same entry on two devices, the first one wins.</p>
+      <h3>Export and import</h3>
+      <p>Under <span class="path">Manual</span>, <strong>Export a copy…</strong> saves your whole diary as one plain JSON file, readable by any program, not just Vessel. <strong>Import from a file…</strong> merges a file in: nothing you already have is lost, and nothing is duplicated.</p>
+      <h3>Moving to a new phone</h3>
+      <p>If you restore your new iPhone from an iCloud or computer backup, Vessel comes with it. Otherwise, on the new phone, install Vessel, open Settings, and either choose the same backup folder or import your exported file.</p>
+    </section>
+
+    <section id="settings">
+      <h2>Settings, in full</h2>
+      <p>Tap the gear on Today.</p>
+      <div class="table-wrap"><table>
+        <tr><th>Setting</th><th>What it does</th></tr>
+        <tr><td>Eating pattern</td><td>Which meals keep your streak. See <a href="#streaks">Streaks</a>.</td></tr>
+        <tr><td>Day resets at</td><td>When one day ends and the next begins.</td></tr>
+        <tr><td>Countdown in Dynamic Island</td><td>The streak countdown on the Lock Screen and Dynamic Island.</td></tr>
+        <tr><td>Remind me before the day ends</td><td>A notification when meals are missing.</td></tr>
+        <tr><td>Start warning</td><td>How many hours before the reset to warn you.</td></tr>
+        <tr><td>Daily goals</td><td>Energy (kcal), protein, carbohydrate and fat (g), water (ml).</td></tr>
+        <tr><td>Measurements</td><td>Metric or US units.</td></tr>
+        <tr><td>Count water in food</td><td>Include the water in drinks and food in your hydration total.</td></tr>
+        <tr><td>Automatic backup</td><td>A folder Vessel copies your diary to. See <a href="#backup">Backup</a>.</td></tr>
+        <tr><td>Manual</td><td>Your whole diary as JSON, out or in.</td></tr>
+      </table></div>
+      <p>On iOS 18, Settings also lists what updating to iOS 26 adds: smarter parsing of unusual phrasings, live transcription as you speak, richer photo understanding, and the Liquid Glass interface. Everything else works the same on both.</p>
+    </section>
+
+    <section id="accessibility">
+      <h2>Accessibility</h2>
+      <ul>
+        <li><strong>VoiceOver</strong>: every control is labelled, including the streak ring, the water vessel and severity, which are read as sentences.</li>
+        <li><strong>Larger Text</strong>: every screen reflows at the largest accessibility sizes; rows stack rather than truncating.</li>
+        <li><strong>Contrast</strong>: every text colour meets WCAG AA in light and dark, and <span class="path">Increase Contrast</span> switches to stronger versions.</li>
+        <li><strong>Reduce Motion</strong>: animations that travel, scale or bounce are toned down.</li>
+      </ul>
+    </section>
+
+    <!-- ===================================================== HELP -->
+
+    <section id="tips">
+      <h2>Tips</h2>
+      <ol>
+        <li><strong>Log the reaction’s start time, not now.</strong> It’s the single biggest thing that makes patterns work.</li>
+        <li><strong>Log while you eat, not at bedtime.</strong> A sentence to Siri or your watch takes seconds. Remembered meals lose their sides, sauces and drinks, and those are often the ingredients that matter.</li>
+        <li><strong>Include the small things.</strong> Milk in coffee, butter on toast, the dressing. “Coffee with milk” is enough for Vessel to find the dairy.</li>
+        <li><strong>Name the kind when it changes the numbers.</strong> “Whole milk”, “2% milk”, “brown rice”: Vessel won’t need to ask.</li>
+        <li><strong>Log good days too.</strong> Patterns come from comparing meals that were followed by a reaction with ones that weren’t. Days with no reaction are half the evidence.</li>
+        <li><strong>Give it a few weeks.</strong> Nothing appears until an ingredient has five occasions with and five without. That’s by design.</li>
+        <li><strong>Vary where you can.</strong> If two things are always eaten together, no log can separate them. Having one without the other now and then lets Vessel tell them apart.</li>
+        <li><strong>Glance at <em>Worth checking</em>.</strong> Ten seconds now saves a wrong pattern later.</li>
+        <li><strong>Use the journal for the rest.</strong> Poor sleep, stress, travel and new medication all affect digestion. A line in the journal gives you context when you read back.</li>
+        <li><strong>Turn on backup to iCloud Drive today.</strong> It takes three taps and it’s the only copy that survives a lost phone.</li>
+        <li><strong>On iPad, keep <kbd>⌘</kbd><kbd>N</kbd> in your fingers.</strong> Quick log from anywhere, in any window.</li>
+        <li><strong>Put “Log water” on the Action button</strong> through the Shortcuts app, for one-press hydration.</li>
+      </ol>
+    </section>
+
+    <section id="troubleshooting">
+      <h2>Troubleshooting</h2>
+      <div class="faq">
+        <details><summary>Vessel logged the wrong food</summary><div>
+          <p>Tap the meal in the Diet Tracker, remove the wrong item, and add the right one through search. Next time, before saving, use <strong>Not reading it right? Search and pick instead.</strong></p>
+          <p>Some everyday foods are filed unexpectedly in USDA’s data: fries are under potato, a green salad under lettuce. Searching those words directly works best.</p>
+        </div></details>
+        <details><summary>“No database match — saved with your wording and no nutrition”</summary><div>
+          <p>Vessel couldn’t find that food. The entry still counts toward your streak and patterns, just without numbers. For packaged food, try the barcode; otherwise search with a more common name.</p>
+        </div></details>
+        <details><summary>My coffee didn’t go into the Water Diary</summary><div>
+          <p>That’s intentional: only water is water. Coffee, milk and juice are in the Diet Tracker with their nutrition. To have their water count toward hydration, turn on <span class="path">Settings → Units → Count water in food</span>.</p>
+        </div></details>
+        <details><summary>“Didn’t catch anything — try again a little closer”</summary><div>
+          <p>The microphone heard no speech. Hold the phone nearer, or check nothing else is using the microphone (a call, a recording app).</p>
+        </div></details>
+        <details><summary>“This device can’t transcribe without sending audio to Apple”</summary><div>
+          <p>Your device doesn’t support on-device speech for your language, and Vessel won’t send your voice off the device. Type instead, or use Siri, which Apple handles under its own privacy terms.</p>
+        </div></details>
+        <details><summary>“Vessel needs microphone access to hear you”</summary><div>
+          <p>Open <span class="path">Settings → Vessel</span> and turn on Microphone and Speech Recognition.</p>
+        </div></details>
+        <details><summary>I logged a meal but my streak didn’t fill</summary><div>
+          <p>Check which meal it was filed as: open it and look at the meal. A “snack” doesn’t fill a meal slot unless <em>Snacks count as a meal</em> is on. Also check <em>Day resets at</em>: a meal after the reset belongs to the next day.</p>
+        </div></details>
+        <details><summary>The Dynamic Island countdown didn’t appear</summary><div>
+          <p>Check that <em>Countdown in Dynamic Island</em> is on in Vessel, and that Live Activities are allowed in <span class="path">Settings → Vessel</span>. iOS decides when Vessel may start it, so it can be late; the reminder notification is the dependable warning.</p>
+        </div></details>
+        <details><summary>My watch says “Sent to your phone” but nothing shows up</summary><div>
+          <p>The phone saves what the watch sends, so it needs Vessel installed and opened at least once. Bring the two within range with Bluetooth on; queued entries go across on their own, and never twice.</p>
+        </div></details>
+        <details><summary>“What your log suggests” never appears</summary><div>
+          <p>Vessel only names a pattern once an ingredient has at least five occasions with it and five without, and a clear difference between the two. That usually takes a few weeks of steady logging, including days without reactions. If every meal has the same ingredient, there’s nothing to compare against.</p>
+        </div></details>
+        <details><summary>Backup says “Couldn’t use that folder”</summary><div>
+          <p>Choose the folder again under <span class="path">Settings → Automatic backup</span>. With iCloud Drive, make sure you’re signed in to iCloud and iCloud Drive is on for Files.</p>
+        </div></details>
+      </div>
+    </section>
+
+    <section id="faq">
+      <h2>Questions</h2>
+      <div class="faq">
+        <details><summary>Is Vessel free?</summary><div><p>Yes. It’s open source, with no subscription, no in-app purchases and no ads.</p></div></details>
+        <details><summary>Does Vessel send my data anywhere?</summary><div><p>No. There’s no account and no Vessel server. The only thing that leaves your device is a barcode number when you look one up, sent to Open Food Facts. Backups go only to a folder you choose. See the <a href="../privacy/">privacy policy</a>.</p></div></details>
+        <details><summary>Does it work offline?</summary><div><p>Everything except barcode lookup: the language model, the 11,750-food database, photo reading and speech all run on the device.</p></div></details>
+        <details><summary>Does it write to Apple Health?</summary><div><p>Not yet. Your diary stays in Vessel, and you can export all of it as JSON at any time.</p></div></details>
+        <details><summary>Can it tell me what I’m intolerant to?</summary><div><p>No, and nothing that works from a diary can. It can show you what tends to come before your reactions in your own log, which is a good thing to take to a doctor or dietitian.</p></div></details>
+        <details><summary>Which devices does it run on?</summary><div><p>iPhone and iPad on iOS 18 or later, and Apple Watch on watchOS 11 or later. iOS 26 adds live transcription, smarter parsing of unusual phrasings, richer photo understanding and the Liquid Glass interface; the rest is identical.</p></div></details>
+        <details><summary>Where does the nutrition data come from?</summary><div><p>USDA FoodData Central for fresh and prepared foods, and Open Food Facts for packaged products found by barcode.</p></div></details>
+      </div>
+    </section>
+
+    <!-- ===================================================== RUN IT YOURSELF -->
+
+    <section id="install">
+      <h2>Install on your own iPhone</h2>
+      <p>Until Vessel is on the App Store, you can build it from its source code and install it on your own iPhone or iPad. It’s free, needs a Mac, and takes about fifteen minutes the first time.</p>
+      <h3>You’ll need</h3>
+      <ul>
+        <li>A Mac with <strong>Xcode 26 or later</strong> (free from the Mac App Store).</li>
+        <li><strong>Homebrew</strong>, from <a href="https://brew.sh">brew.sh</a>.</li>
+        <li>An <strong>Apple ID</strong>. A free one works; no paid developer membership is needed.</li>
+        <li>A USB cable, or your iPhone on the same Wi-Fi as your Mac.</li>
+      </ul>
+      <h3>The one-command way</h3>
+      <p>Sign in to Xcode once (<span class="path">Xcode → Settings → Accounts</span>, with your Apple ID), plug in your iPhone and unlock it, then paste this into Terminal:</p>
+      <pre><code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/shankar-sachin/vessel/main/scripts/install.sh)"</code></pre>
+      <p>It installs XcodeGen if you need it, downloads Vessel to <code>~/vessel</code>, signs it with your own Apple ID, and installs it on the connected iPhone. Your Apple Watch gets it through the Watch app. If something’s missing, such as Developer Mode or the Xcode sign-in, it stops and tells you exactly what to do. Then do the <strong>Trust</strong> step below, once.</p>
+      <div class="callout note"><b>Why not the App Store, or Homebrew?</b><span>iOS only runs apps signed for your device. Until Vessel is on the App Store, that signing has to happen on your own Mac, with your own Apple ID, and this script does it for you. Homebrew installs Mac software, so it can’t put an app on an iPhone.</span></div>
+      <h3>Or step by step, in Xcode</h3>
+      <pre><code>brew install xcodegen
+git clone https://github.com/shankar-sachin/vessel
+cd vessel
+xcodegen generate
+open Vessel.xcodeproj</code></pre>
+      <ol>
+        <li>In Xcode, open <span class="path">Settings → Accounts</span> and sign in with your Apple ID.</li>
+        <li>Click the <strong>Vessel</strong> project, then for each target (Vessel, StreakWidget, VesselWatch) open <strong>Signing &amp; Capabilities</strong> and choose your <em>Personal Team</em>.</li>
+        <li>Bundle identifiers must be unique to you. If Xcode complains, change <code>com.sachinshankar</code> to something of your own, such as <code>com.yourname</code>, in <code>project.yml</code> (<code>bundleIdPrefix</code> and each <code>PRODUCT_BUNDLE_IDENTIFIER</code>), then run <code>xcodegen generate</code> again.</li>
+        <li>Connect your iPhone, unlock it, and choose it at the top of the Xcode window.</li>
+        <li>On the iPhone, turn on <span class="path">Settings → Privacy &amp; Security → Developer Mode</span> and restart when asked.</li>
+        <li>In Xcode, press <kbd>⌘</kbd><kbd>R</kbd>. The first time, the iPhone will refuse to open the app: go to <span class="path">Settings → General → VPN &amp; Device Management</span>, tap your Apple ID, and tap <strong>Trust</strong>.</li>
+      </ol>
+      <div class="callout note"><b>Your data is safe across reinstalls</b><span>Installing a newer build over the old one keeps your diary. Deleting the app deletes it, so set up <a href="#backup">backup</a> first.</span></div>
+    </section>
+
+    <section id="install-watch">
+      <h2>Install on Apple Watch</h2>
+      <p>The watch app is built along with the phone app. After installing on your iPhone, open the <strong>Watch</strong> app on the phone, find Vessel under <em>Available Apps</em>, and tap <strong>Install</strong>. If it isn’t listed, choose the <strong>VesselWatch</strong> scheme in Xcode with your paired watch as the destination, and press <kbd>⌘</kbd><kbd>R</kbd>.</p>
+      <p>Enable Developer Mode on the watch too, under <span class="path">Settings → Privacy &amp; Security</span>.</p>
+    </section>
+
+    <section id="keep-running">
+      <h2>Keeping it installed</h2>
+      <p>Apps signed with a free Apple ID stop opening after <strong>7 days</strong>. Your diary isn’t affected. Connect your iPhone and run the install command again (or press <kbd>⌘</kbd><kbd>R</kbd> in Xcode) to renew it for another week; everything you logged is still there.</p>
+      <p>A paid Apple Developer Program membership extends this to a year, and once Vessel is on the App Store none of this applies.</p>
+      <h3>Updating to a new version</h3>
+      <p>Run the install command again. It pulls the latest version and reinstalls it over the old one, keeping your diary.</p>
+      <h3>Checking a build</h3>
+      <p>The repository includes scripts that check a build the way the release is checked:</p>
+      <div class="table-wrap"><table>
+        <tr><th>Script</th><th>What it does</th></tr>
+        <tr><td><code>scripts/install.sh</code></td><td>The one-command install above.</td></tr>
+        <tr><td><code>scripts/test-all.sh</code></td><td>Runs every test and builds for iPhone, iPad and Apple Watch, failing on any compiler warning. <code>--release</code> adds an App Store archive; <code>--ui</code> adds the interface tests.</td></tr>
+        <tr><td><code>scripts/check-metadata.sh</code></td><td>Confirms every Siri action and shortcut is visible to the system.</td></tr>
+        <tr><td><code>scripts/screenshots.sh</code></td><td>Drives the app through every screen and saves named screenshots.</td></tr>
+        <tr><td><code>scripts/rebuild-db.sh</code></td><td>Rebuilds the food database from USDA downloads and tests its search.</td></tr>
+        <tr><td><code>scripts/retrain.sh</code></td><td>Regenerates the training data, retrains the language model, and grades it on hand-written sentences.</td></tr>
+      </table></div>
+    </section>
+
+    <section id="host-site">
+      <h2>Host your own copy</h2>
+      <p>Vessel itself needs no hosting: there’s no server, and each device keeps its own diary. What you can host is this website, the landing page, this wiki, and the privacy and support pages, for example for your own fork.</p>
+      <ol>
+        <li>Fork <a href="https://github.com/shankar-sachin/vessel">the repository</a> on GitHub.</li>
+        <li>In your fork, open <span class="path">Settings → Pages</span>. Under <em>Build and deployment</em>, choose <strong>Deploy from a branch</strong>, then <strong>main</strong> and <strong>/docs</strong>, and save.</li>
+        <li>A minute later the site is live at <code>https://&lt;your-name&gt;.github.io/vessel/</code>. Every push to <code>main</code> that changes <code>docs/</code> republishes it.</li>
+      </ol>
+      <p>The site is plain HTML and CSS with no build step, so any static host works: upload the <code>docs/</code> folder as it is. To preview it on your Mac:</p>
+      <pre><code>python3 -m http.server --directory docs 8000
+<span class="c"># open http://localhost:8000</span></code></pre>
+      <p>If you publish your own build to the App Store, the privacy and support pages are the URLs App Store Connect asks for. Update them to name you as the developer.</p>
+    </section>
+
+    <nav class="prev-next" aria-label="Elsewhere">
+      <a href="../">← Back to Vessel</a>
+      <a href="../support/">Still stuck? Get support →</a>
+    </nav>
+  </article>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Footer">
+      <a href="../">Home</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="../support/">Support</a>
+      <a href="https://github.com/shankar-sachin/vessel">GitHub</a>
+    </nav>
+    <p>Vessel is a personal diary, not a medical device. Patterns it finds are observations about your own log, never a diagnosis.</p>
+  </div>
+</footer>
+
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

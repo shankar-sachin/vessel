@@ -160,7 +160,7 @@ final class BackupCoordinator {
 
         guard let contents = try? FileManager.default.contentsOfDirectory(
             at: folder,
-            includingPropertiesForKeys: [.contentModificationDateKey],
+            includingPropertiesForKeys: nil,
             options: [.skipsHiddenFiles]
         ) else { return nil }
 

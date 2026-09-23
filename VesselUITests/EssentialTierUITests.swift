@@ -49,7 +49,7 @@ final class EssentialTierUITests: XCTestCase {
 
         let card = try XCTUnwrap(findCard(in: app), "The Essential tier should offer the upgrade once")
         XCTAssertTrue(card.buttons["Dismiss"].isHittable, "The card sits at the top of Today, no scrolling needed")
-        XCTAssertTrue(card.buttons["openSoftwareUpdate"].exists, "The card offers a way to update")
+        XCTAssertTrue(card.staticTexts["softwareUpdateHint"].exists, "The card says where to update")
         capture("essential-upgrade-card")
         card.buttons["Dismiss"].tap()
         XCTAssertFalse(card.waitForExistence(timeout: 2), "Dismissing should remove it")

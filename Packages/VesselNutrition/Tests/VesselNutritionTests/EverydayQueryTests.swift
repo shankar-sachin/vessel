@@ -62,6 +62,11 @@ private let everyday: [(query: String, accept: [String])] = [
     ("boiled egg", ["boiled"]),
     ("chicken breast", ["Chicken breast"]),
     ("brown rice", ["Rice, brown"]),
+    // USDA has no plain "Toast": the ordinary food is "Bread, …, toasted".
+    // Before `preparedReading`, "toast" resolved to French toast.
+    ("toast", ["toasted"]),
+    ("french toast", ["French toast"]),
+    ("melba toast", ["Melba toast"]),
 ]
 
 @Suite("Everyday queries land on the ordinary food")

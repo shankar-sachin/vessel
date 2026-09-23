@@ -51,11 +51,13 @@ public struct FoodSearch: Sendable {
         guard !candidates.isEmpty else { return [] }
 
         let typicality = Self.typicality(of: candidates)
+        let preparedReading = Self.preparedReading(of: queryTokens.last.map(Self.stem), in: candidates)
         return candidates
             .map { food in
                 FoodMatch(food: food, score: score(
                     food: food, query: cleaned, queryTokens: queryTokens,
-                    typicality: typicality[food.id] ?? Typicality(score: 0, qualifierCost: Double(food.qualifiers))
+                    typicality: typicality[food.id] ?? Typicality(score: 0, qualifierCost: Double(food.qualifiers)),
+                    readsAsPrepared: preparedReading.contains(food.id)
                 ))
             }
             .filter { $0.score > 0 }
@@ -88,7 +90,10 @@ public struct FoodSearch: Sendable {
     /// cooked": it contains the whole query, it is two words long, and USDA
     /// scores it just as popular. Nothing in that trio knows that a rice cake
     /// is a cake. The head noun does.
-    private func score(food: FoodRecord, query: String, queryTokens: [String], typicality: Typicality) -> Double {
+    private func score(
+        food: FoodRecord, query: String, queryTokens: [String], typicality: Typicality,
+        readsAsPrepared: Bool = false
+    ) -> Double {
         let name = Self.normalize(food.name)
         let nameTokens = name.split(separator: " ").map(String.init)
         let queryStems = queryTokens.map(Self.stem)
@@ -109,6 +114,9 @@ public struct FoodSearch: Sendable {
             aboutness = 0.9
         } else if queryStems.contains(head) {
             aboutness = 0.6
+        } else if readsAsPrepared {
+            // "toast" → "Bread, white, toasted". See `preparedReading(of:in:)`.
+            aboutness = 0.9
         } else {
             aboutness = 0.0
         }
@@ -122,7 +130,12 @@ public struct FoodSearch: Sendable {
         // not a kind of chicken you get by asking for chicken. Each unasked-for
         // modifier costs more than a qualifier, which is why this is not simply
         // folded into `brevity`.
-        let unaskedModifiers = Self.headClauseTokens(of: food.name)
+        // A prepared reading stands in for the head, so the head itself is not
+        // an unasked-for word: "bread" is what "toast" is made of.
+        let modifierTokens = readsAsPrepared
+            ? Array(Self.headClauseTokens(of: food.name).dropLast())
+            : Self.headClauseTokens(of: food.name)
+        let unaskedModifiers = modifierTokens
             .filter { token in !queryStems.contains(Self.stem(token)) }
             .count
         aboutness = max(0, aboutness - Double(unaskedModifiers) * 0.25)
@@ -214,6 +227,46 @@ public struct FoodSearch: Sendable {
             }
         }
         return result
+    }
+
+    /// Rows a bare word names by how they were *prepared*, when the word has
+    /// no plain row of its own.
+    ///
+    /// USDA has no "Toast". Every row whose head noun is toast is a compound —
+    /// French, Melba, shrimp, zwieback — so head-noun ranking alone answered
+    /// "a slice of toast" with French toast, an egg-dipped dish. The ordinary
+    /// food is filed as a preparation instead: "Bread, white, toasted", and
+    /// sixty rows like it.
+    ///
+    /// So when a word's own family has no plain row, look at the candidates
+    /// that carry the word as a participle clause ("toasted"). If one head
+    /// noun holds a clear majority of those rows, a real sample of them, and
+    /// several times as many as the word's own compounds, that head family is
+    /// what the word means.
+    ///
+    /// Every threshold is there to stop a coincidence becoming an answer.
+    /// "Roasted" spreads across a dozen meats (pork is only 21%), so "roast"
+    /// is left alone; "iced" is only half tea. In the v2.0.0 database the rule
+    /// fires for "toast" alone, but it is computed from the rows, not listed.
+    static func preparedReading(of queryStem: String?, in candidates: [FoodRecord]) -> Set<String> {
+        guard let word = queryStem, word.count >= 3 else { return [] }
+        let family = candidates.filter { stem($0.head) == word }
+        guard !family.isEmpty,
+              !family.contains(where: { headClauseTokens(of: $0.name).count == 1 })
+        else { return [] }
+
+        let participles: Set<String> = [word + "ed", word + "d"]
+        let prepared = candidates.filter { food in
+            stem(food.head) != word && food.name.components(separatedBy: ",").dropFirst()
+                .contains { clause in normalize(clause).split(separator: " ").contains { participles.contains(String($0)) } }
+        }
+        let byHead = Dictionary(grouping: prepared) { stem($0.head) }
+        guard let (_, rows) = byHead.max(by: { $0.value.count < $1.value.count }),
+              rows.count >= 10,
+              Double(rows.count) >= 0.6 * Double(prepared.count),
+              rows.count >= 3 * family.count
+        else { return [] }
+        return Set(rows.map(\.id))
     }
 
     struct Typicality {

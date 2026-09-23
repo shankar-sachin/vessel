@@ -82,6 +82,9 @@ private struct JournalCard: View {
                     Text(entry.createdAt, format: .dateTime.weekday(.wide).day().month(.wide))
                         .font(Typography.captionEmphasis)
                         .foregroundStyle(Palette.journal)
+                        // Wraps rather than truncating to "Tuesday, Septe…"
+                        // at the largest accessibility sizes.
+                        .fixedSize(horizontal: false, vertical: true)
                     AdaptiveSpacer()
                     if let mood = entry.mood {
                         Label(mood.title, systemImage: mood.symbol)

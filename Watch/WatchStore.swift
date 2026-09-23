@@ -45,6 +45,19 @@ final class WatchStore: NSObject {
         if let data = UserDefaults.standard.data(forKey: Keys.pending) {
             pending = (try? JSONDecoder().decode([WatchMessage].self, from: data)) ?? []
         }
+        #if DEBUG
+        // `-sample` shows a realistic day, for screenshots: a watch simulator
+        // has no paired phone to send it a summary, so it only ever shows zeros.
+        if ProcessInfo.processInfo.arguments.contains("-sample") {
+            summary = WatchSummary(
+                streakDays: 12, mealsLogged: 2, mealsRequired: 3,
+                slotsLogged: ["breakfast", "lunch"],
+                kilocalories: 1_240, kilocalorieGoal: 2_000,
+                waterML: 1_500, waterGoalML: 2_500, updatedAt: Date()
+            )
+            pending = []
+        }
+        #endif
     }
 
     func start() {

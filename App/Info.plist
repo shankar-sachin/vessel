@@ -82,6 +82,22 @@
 		</dict>
 	</array>
 
+	<!-- iPhone is portrait. iPad takes every orientation, which App Store
+	     validation requires of any iPad app that supports multitasking. These
+	     live here rather than as INFOPLIST_KEY_ build settings, which Xcode
+	     ignores when a hand-written Info.plist is supplied. -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vessel</title>
+<meta name="description" content="A food, water, journal and symptom diary for iPhone, iPad and Apple Watch. Say what you ate in plain words; Vessel lines up how you felt with what came before it. On your device, no account.">
+<meta name="theme-color" content="#FAF6F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Vessel">
+<meta property="og:description" content="Bloated at 9:40 pm? Vessel remembers lunch. A food, water, journal and symptom diary for iPhone, iPad and Apple Watch.">
+<meta property="og:image" content="https://shankar-sachin.github.io/vessel/assets/og.png">
+<meta property="og:url" content="https://shankar-sachin.github.io/vessel/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/logo.png" alt="" width="30" height="30">Vessel</a>
+    <nav class="site-nav" aria-label="Site">
+      <a class="opt" href="#how">How it works</a>
+      <a class="opt" href="#privacy">Privacy</a>
+      <a href="wiki/">Wiki</a>
+      <a href="#get">Get Vessel</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">iPhone · iPad · Apple Watch</p>
+        <h1>Bloated at 9:40 pm? <em>Vessel remembers lunch.</em></h1>
+        <p class="lede">A food, water, journal and symptom diary. Say what you ate the way you’d say it out loud, note how you felt when it started, and Vessel lines the two up, on your phone and nowhere else.</p>
+        <div class="actions">
+          <span class="store-badge" aria-label="Coming soon to the App Store"><small>Coming soon to the</small><strong>App Store</strong></span>
+          <a class="btn primary" href="wiki/">Read the wiki</a>
+          <a class="btn" href="#get">Build it today <span class="sub">free</span></a>
+        </div>
+      </div>
+      <div class="hero-phone phone">
+        <img src="assets/shots/today.jpg" width="1206" height="2622" alt="Vessel’s Today screen: a streak ring, the day’s energy and hydration, and the meals logged so far.">
+      </div>
+    </div>
+
+    <figure class="day" aria-labelledby="day-title">
+      <div class="day-head">
+        <h2 id="day-title">One Tuesday, as Vessel sees it</h2>
+        <div class="legend" aria-hidden="true">
+          <span><i style="background:var(--diet)"></i>Food &amp; drink</span>
+          <span><i style="background:var(--water)"></i>Water</span>
+          <span><i style="background:var(--symptom)"></i>Reaction</span>
+          <span><i class="hatch"></i>6 hours before it</span>
+        </div>
+      </div>
+      <ol class="track" style="--from: 15.6667">
+        <li class="window" aria-hidden="true"></li>
+        <li class="ev up" style="--at: 7.67; --c: var(--diet)">
+          <span class="dot"></span>
+          <div class="card"><span class="when">7:40 am</span><span class="what"><b>Porridge</b> with berries</span><span class="tags">made with water</span></div>
+        </li>
+        <li class="ev down" style="--at: 10.25; --c: var(--water)">
+          <span class="dot"></span>
+          <div class="card"><span class="when">10:15 am</span><span class="what"><b>Water</b>, a bottle</span><span class="tags">500 ml</span></div>
+        </li>
+        <li class="ev up" style="--at: 12.83; --c: var(--diet)">
+          <span class="dot"></span>
+          <div class="card"><span class="when">12:50 pm</span><span class="what"><b>Cheddar &amp; pickle</b> sandwich</span><span class="tags"><span>dairy</span><span>gluten</span></span></div>
+        </li>
+        <li class="ev down hit" style="--at: 16.5; --c: var(--diet)">
+          <span class="dot"></span>
+          <div class="card"><span class="when">4:30 pm</span><span class="what"><b>Flat white</b></span><span class="tags"><span class="dairy">dairy</span></span></div>
+        </li>
+        <li class="ev up hit" style="--at: 19.33; --c: var(--diet)">
+          <span class="dot"></span>
+          <div class="card"><span class="when">7:20 pm</span><span class="what"><b>Pasta</b> with parmesan</span><span class="tags"><span class="dairy">dairy</span><span>gluten</span><span>allium</span></span></div>
+        </li>
+        <li class="ev down flip symptom" style="--at: 21.67; --c: var(--symptom)">
+          <span class="dot"></span>
+          <div class="card"><span class="when">started 9:40 pm</span><span class="what"><b>Bloating</b>, moderate</span><span class="tags">logged at 11:05 pm</span></div>
+        </li>
+        <li class="hours" aria-hidden="true"><span>6 am</span><span>9 am</span><span>noon</span><span>3 pm</span><span>6 pm</span><span>9 pm</span><span>midnight</span></li>
+      </ol>
+      <figcaption class="window-note">
+        <span>A reaction is logged against when it <em>started</em>. Vessel looks back six hours, and over weeks names the ingredient that keeps turning up before it and not otherwise.</span>
+        <span class="finding"><span class="example-tag">Example</span><strong>Dairy → Bloating</strong><span class="mono">7 of 9 occasions · typical onset 3.5&nbsp;h</span></span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Four logs, one timeline</p>
+      <h2>Kept together because they only make sense together</h2>
+      <p>How you felt is nearly useless on its own, and a food diary alone can’t tell you what disagrees with you. Put both on one clock and they start to answer each other.</p>
+    </div>
+    <div class="logs">
+      <article class="log" style="--c: var(--diet)">
+        <div class="phone"><img src="assets/shots/quick-log.jpg" width="1206" height="2622" loading="lazy" alt="Quick log showing “two eggs and toast” read as two foods with their calories."></div>
+        <h3>Diet Tracker</h3>
+        <p>Type it, say it, photograph the plate or scan the barcode. 11,750 foods on the device, with real nutrition for each.</p>
+      </article>
+      <article class="log" style="--c: var(--water)">
+        <div class="phone"><img src="assets/shots/water.jpg" width="1206" height="2622" loading="lazy" alt="Water Diary with a bottle filling toward the day’s goal."></div>
+        <h3>Water Diary</h3>
+        <p>One tap for a glass, a bottle or a large one. Only water goes here; coffee and milk count as food.</p>
+      </article>
+      <article class="log" style="--c: var(--journal)">
+        <div class="phone"><img src="assets/shots/journal.jpg" width="1206" height="2622" loading="lazy" alt="Journal entries set in a serif face, each with a mood."></div>
+        <h3>Journal</h3>
+        <p>A few lines about the day and, if you like, a mood. Set in a serif because it’s for reading back.</p>
+      </article>
+      <article class="log" style="--c: var(--symptom)">
+        <div class="phone"><img src="assets/shots/date-log.jpg" width="1206" height="2622" loading="lazy" alt="Date Log listing reactions with severity, and a pattern Vessel found."></div>
+        <h3>Date Log</h3>
+        <p>Bloating, heartburn, headaches and fifteen more, each on a five-step scale that says what the steps mean.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap parse-grid">
+    <div>
+      <div class="section-head" style="margin-bottom:0">
+        <p class="eyebrow">A language model the size of a photo</p>
+        <h2>Say it the way you’d say it</h2>
+        <p>Vessel carries its own small language model, built for this one job and small enough to run offline on a watch. It picks out what you ate, how much and when, then shows you what it read before anything is saved.</p>
+      </div>
+      <div class="figures">
+        <div class="figure"><b>98.1%</b><span>of 215 hand-written sentences understood correctly</span></div>
+        <div class="figure"><b>≈1 MB</b><span>for both models, entirely on the device</span></div>
+        <div class="figure"><b>11,750</b><span>foods from USDA FoodData Central, searchable offline</span></div>
+        <div class="figure"><b>&lt;100 ms</b><span>from sentence to nutrition, measured in the test suite</span></div>
+      </div>
+    </div>
+
+    <div class="parse" aria-live="polite">
+      <p class="eyebrow">What the model read</p>
+      <p class="said" id="said"></p>
+      <div class="result" id="result"></div>
+      <div class="foot">
+        <span id="parse-note">Real output of Vessel’s tagger. Dotted words are read by its time rules.</span>
+        <button type="button" id="next-example">Another sentence</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Wherever you are when you remember</p>
+      <h2>Log from Siri, your wrist or a keyboard</h2>
+    </div>
+    <div class="places">
+      <div class="place">
+        <h3>Siri</h3>
+        <ul class="said-to-siri">
+          <li>Log a meal in Vessel</li>
+          <li>Log a bottle of water in Vessel</li>
+          <li>Log bloating in Vessel</li>
+          <li>How am I doing in Vessel</li>
+        </ul>
+        <p>Siri goes through the same parser as the app, asks “which milk?” when the answer changes the numbers, and reads back anything it isn’t sure about before saving.</p>
+      </div>
+      <div class="place">
+        <h3>Apple Watch</h3>
+        <div class="watch-shots">
+          <img src="assets/shots/watch-today.jpg" width="416" height="496" loading="lazy" alt="Watch: streak and meals today.">
+          <img src="assets/shots/watch-water.jpg" width="416" height="496" loading="lazy" alt="Watch: water with one-tap amounts.">
+          <img src="assets/shots/watch-log.jpg" width="416" height="496" loading="lazy" alt="Watch: the log page, ready for what you had.">
+        </div>
+        <p>The day at a glance, water in one tap, and a meal said out loud and previewed on the wrist, even with your phone out of range.</p>
+      </div>
+      <div class="place">
+        <h3>iPad</h3>
+        <dl class="keys">
+          <dt><kbd>⌘</kbd> <kbd>N</kbd></dt><dd>Quick log</dd>
+          <dt><kbd>⇧</kbd><kbd>⌘</kbd> <kbd>W</kbd></dt><dd>Add water</dd>
+          <dt><kbd>⇧</kbd><kbd>⌘</kbd> <kbd>R</kbd></dt><dd>Log a reaction</dd>
+          <dt><kbd>⇧</kbd><kbd>⌘</kbd> <kbd>J</kbd></dt><dd>New journal entry</dd>
+          <dt><kbd>⌘</kbd> <kbd>1</kbd>–<kbd>5</kbd></dt><dd>Jump between sections</dd>
+        </dl>
+        <p>A sidebar, several windows side by side, and a photo dragged onto the Diet log is read for the food in it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap">
+    <div class="section-head">
+      <p class="eyebrow">Your data</p>
+      <h2>A health diary that never leaves your phone</h2>
+      <p>Vessel has no account, no server of its own, and nothing that reports back. There is nobody on the other end to trust.</p>
+    </div>
+    <div class="promise">
+      <div><b>No account</b><span>Open it and start. There’s nothing to sign up for.</span></div>
+      <div><b>No tracking</b><span>No analytics, no advertising identifiers, no crash reporters phoning home.</span></div>
+      <div><b>Speech stays here</b><span>Voice is transcribed on the device. Where that isn’t possible, Vessel declines to listen rather than send audio away.</span></div>
+      <div><b>One network call</b><span>A barcode you scan is looked up in Open Food Facts. The barcode is all it sends.</span></div>
+      <div><b>Yours to take</b><span>Export everything as plain JSON, or back up automatically to a folder you pick, such as iCloud Drive.</span></div>
+    </div>
+    <p style="margin-top:1.5rem;color:var(--ink-2)">The full <a href="privacy/">privacy policy</a> is short, because there is little to say.</p>
+  </div>
+</section>
+
+<section id="get">
+  <div class="wrap get">
+    <div class="col">
+      <p class="eyebrow">Get Vessel</p>
+      <h2>On its way to the App Store</h2>
+      <p>Vessel 2.0 is finished and ready for review. It will be listed as soon as its developer account is in place. Until then it’s open source, and anyone with a Mac can build it and install it on their own iPhone for free.</p>
+      <div class="actions">
+        <a class="btn primary" href="wiki/#install">Install it yourself</a>
+        <a class="btn" href="https://github.com/shankar-sachin/vessel">Source on GitHub</a>
+      </div>
+      <p class="eyebrow" style="margin-top:1rem">Requires</p>
+      <p>iPhone or iPad on iOS 18 or later (fullest on iOS 26). Apple Watch on watchOS 11 or later.</p>
+    </div>
+    <div class="col">
+      <pre><code><span class="c"># On a Mac with Xcode, your iPhone plugged in</span>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/shankar-sachin/vessel/main/scripts/install.sh)"</code></pre>
+      <p style="font-size:var(--t-sm)">One command: it downloads Vessel, signs it with your own free Apple ID and installs it. <a href="wiki/#install">Step-by-step instructions</a> are in the wiki.</p>
+      <p class="eyebrow" style="margin-top:0.5rem">Tested on real hardware</p>
+      <ul class="status">
+        <li><span class="y">✓</span><span>Every screen, on iPhone, iPad and Apple Watch simulators, by an automated suite</span></li>
+        <li><span class="y">✓</span><span>The streak countdown in the Dynamic Island, on a real iPhone</span></li>
+        <li><span class="n">○</span><span>Voice, Siri and the watch-to-phone handoff are fully built and tested up to the system boundary, and still to be confirmed on a device</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <nav aria-label="Footer">
+      <a href="wiki/">Wiki</a>
+      <a href="privacy/">Privacy</a>
+      <a href="support/">Support</a>
+      <a href="https://github.com/shankar-sachin/vessel">GitHub</a>
+      <a href="https://github.com/shankar-sachin/vessel/releases">Releases</a>
+    </nav>
+    <p>Vessel is a personal diary, not a medical device. Patterns it finds are observations about your own log, never a diagnosis. Talk to a clinician about anything that worries you.</p>
+    <p>Nutrition data from <a href="https://fdc.nal.usda.gov">USDA FoodData Central</a> (public domain). Packaged products from <a href="https://world.openfoodfacts.org">Open Food Facts</a> under the ODbL. Vessel is open source under the Apache 2.0 licence. © 2026 Sachin Shankar.</p>
+  </div>
+</footer>
+
+<script>
+// Real parses from Vessel's models (ParserModels.tagTokens / predictIntent and
+// TextNormalizer), captured from the v2.0.0 build. Each token is
+// [word, label]; label null = not part of any entity, "when" = read by the
+// time rules rather than the tagger, "drop" = filler the normalizer removes.
+const EXAMPLES = [
+  {
+    tokens: [["two","QTY"],["eggs","FOOD"],["and",null],["toast","FOOD"],["this morning","when"],["with",null],["a",null],["flat white","DRINK"]],
+    chips: [["Meal","breakfast"],["eggs","× 2"],["toast",""],["flat white","drink"]],
+    confidence: "1.00"
+  },
+  {
+    tokens: [["half a","QTY"],["baguette","FOOD"],["with",null],["butter","FOOD"],["for lunch","when"]],
+    chips: [["Meal","lunch"],["baguette","× 0.5"],["butter",""]],
+    confidence: "0.99"
+  },
+  {
+    tokens: [["felt",null],["really","drop"],["bloated","SYMPTOM"],["after dinner","when"]],
+    chips: [["Reaction","bloating"],["When","after dinner"]],
+    confidence: "0.99"
+  },
+  {
+    tokens: [["bowl",null],["of",null],["porridge","FOOD"],["with",null],["berries","FOOD"],["and",null],["a",null],["coffee","DRINK"]],
+    chips: [["porridge",""],["berries",""],["coffee","drink"]],
+    confidence: "1.00"
+  }
+];
+
+(function () {
+  const said = document.getElementById("said");
+  const result = document.getElementById("result");
+  const button = document.getElementById("next-example");
+  let i = 0;
+
+  function render(ex) {
+    said.textContent = "";
+    ex.tokens.forEach(([word, label], n) => {
+      const span = document.createElement("span");
+      span.className = "tok";
+      span.textContent = word;
+      if (label === "when") { span.classList.add("when"); span.dataset.l = "WHEN"; }
+      else if (label === "drop") { span.classList.add("dropped"); }
+      else if (label) { span.dataset.l = label; }
+      said.appendChild(span);
+      if (n < ex.tokens.length - 1) said.appendChild(document.createTextNode(" "));
+    });
+    result.textContent = "";
+    ex.chips.forEach(([k, v]) => {
+      const chip = document.createElement("span");
+      chip.className = "chip";
+      const b = document.createElement("b"); b.textContent = k;
+      chip.appendChild(b);
+      if (v) chip.appendChild(document.createTextNode(v));
+      result.appendChild(chip);
+    });
+    const conf = document.createElement("span");
+    conf.className = "chip mono";
+    conf.textContent = "confidence " + ex.confidence;
+    result.appendChild(conf);
+  }
+
+  render(EXAMPLES[0]);
+  button.addEventListener("click", () => { i = (i + 1) % EXAMPLES.length; render(EXAMPLES[i]); });
+})();
+</script>
+</body>
+</html>

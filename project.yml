@@ -12,8 +12,8 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MARKETING_VERSION: "1.7.0"
-    CURRENT_PROJECT_VERSION: "10"
+    MARKETING_VERSION: "2.0.0"
+    CURRENT_PROJECT_VERSION: "11"
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     SWIFT_STRICT_CONCURRENCY: complete
     # Warnings we intend to keep at zero rather than learn to ignore.
@@ -58,9 +58,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_PREVIEWS: YES
         SUPPORTS_MACCATALYST: NO
-        # The app supports every orientation on iPad; the layout is adaptive.
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait"
-        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        # Orientations are in App/Info.plist: INFOPLIST_KEY_ settings are
+        # ignored when INFOPLIST_FILE is set.
     dependencies:
       - package: VesselCore
       - package: VesselDesign
