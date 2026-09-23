@@ -132,7 +132,7 @@ struct WaterScreen: View {
     }
 
     private var quickAddRow: some View {
-        HStack(spacing: Layout.md) {
+        AdaptiveStack(spacing: Layout.md) {
             ForEach(quickAdds, id: \.label) { item in
                 QuickAddButton(
                     title: item.label,

@@ -1,7 +1,9 @@
 import SwiftUI
 
-#if canImport(UIKit)
+#if os(iOS)
 import UIKit
+#elseif os(watchOS)
+import WatchKit
 #endif
 
 /// A button style that dips under the finger and springs back.
@@ -86,6 +88,7 @@ public struct QuickAddButton: View {
             )
         }
         .buttonStyle(PressableTileStyle())
+        .vesselHover()
         // The labels must escape the tile's bounds as they rise, and must never
         // intercept a second tap while in flight.
         .overlay(alignment: .top) {
@@ -103,8 +106,10 @@ public struct QuickAddButton: View {
     }
 
     private func fireBurst() {
-        #if canImport(UIKit)
+        #if os(iOS)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #elseif os(watchOS)
+        WKInterfaceDevice.current().play(.click)
         #endif
 
         let id = UUID()

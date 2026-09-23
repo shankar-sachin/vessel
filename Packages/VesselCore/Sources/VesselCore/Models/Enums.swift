@@ -47,7 +47,7 @@ public enum MealSlot: String, Codable, Sendable, CaseIterable, Identifiable {
 /// How an entry got into the app. Tracked so we can measure which input methods
 /// people actually use, and so a low-confidence parse can be shown for review.
 public enum EntrySource: String, Codable, Sendable, CaseIterable {
-    case manual, text, voice, photo, barcode, siri, quickAdd
+    case manual, text, voice, photo, barcode, siri, quickAdd, watch
 
     public var symbol: String {
         switch self {
@@ -58,6 +58,7 @@ public enum EntrySource: String, Codable, Sendable, CaseIterable {
         case .barcode:  return "barcode.viewfinder"
         case .siri:     return "mic.circle"
         case .quickAdd: return "bolt"
+        case .watch:    return "applewatch"
         }
     }
 }

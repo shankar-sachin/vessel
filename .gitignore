@@ -25,3 +25,6 @@ Package.resolved
 
 # macOS
 .DS_Store
+
+# Planning documents for upcoming releases — working notes, kept out of the repo.
+documentation/

@@ -18,7 +18,10 @@ public extension Color {
         lightHC: UInt32? = nil,
         darkHC: UInt32? = nil
     ) -> Color {
-        #if canImport(UIKit)
+        #if os(watchOS)
+        // watchOS is dark by design, on an OLED black ground.
+        return Color(hex: dark)
+        #elseif canImport(UIKit)
         return Color(uiColor: UIColor { traits in
             let increased = traits.accessibilityContrast == .high
             switch (traits.userInterfaceStyle, increased) {

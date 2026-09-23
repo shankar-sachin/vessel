@@ -55,7 +55,7 @@ struct LogWaterSheet: View {
                         } label: {
                             Text("\(Int(preset)) ml")
                                 .font(Typography.captionEmphasis)
-                                .foregroundStyle(volumeML == preset ? .white : Palette.water)
+                                .foregroundStyle(volumeML == preset ? Palette.onAccent : Palette.water)
                                 .padding(.horizontal, Layout.md)
                                 .padding(.vertical, 7)
                                 .background(

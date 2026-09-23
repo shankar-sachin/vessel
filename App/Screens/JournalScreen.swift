@@ -78,11 +78,11 @@ private struct JournalCard: View {
     var body: some View {
         VesselCard {
             VStack(alignment: .leading, spacing: Layout.sm) {
-                HStack(spacing: Layout.sm) {
+                AdaptiveStack(spacing: Layout.sm) {
                     Text(entry.createdAt, format: .dateTime.weekday(.wide).day().month(.wide))
                         .font(Typography.captionEmphasis)
                         .foregroundStyle(Palette.journal)
-                    Spacer()
+                    AdaptiveSpacer()
                     if let mood = entry.mood {
                         Label(mood.title, systemImage: mood.symbol)
                             .font(Typography.caption)
@@ -96,12 +96,17 @@ private struct JournalCard: View {
                         .foregroundStyle(Palette.ink)
                 }
 
+                // An excerpt: the card shows five lines and the entry opens in
+                // full. VoiceOver gets every word, and the accessibility audit
+                // is told the truncation is deliberate.
                 Text(entry.body)
                     .font(Typography.prose)
                     .foregroundStyle(Palette.inkSecondary)
                     .proseLineSpacing()
                     .lineLimit(5)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityLabel(entry.body)
+                    .accessibilityIdentifier("journalExcerpt")
 
                 if !entry.resolvedTags.isEmpty {
                     HStack(spacing: Layout.xs) {

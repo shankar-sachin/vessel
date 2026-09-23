@@ -75,7 +75,18 @@ struct TodayScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Layout.xl) {
-                HStack(spacing: Layout.sm) {
+                // First thing on Today until it's dismissed: the upgrade is only
+                // worth mentioning if it's seen, and the X puts it away for good.
+                if let profile, VesselCapabilities.current.canUpgrade, !profile.didDismissUpgradePrompt {
+                    UpgradeCard {
+                        profile.didDismissUpgradePrompt = true
+                        try? context.save()
+                    }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("upgradeCard")
+                }
+
+                AdaptiveStack(spacing: Layout.sm) {
                     QuickLogPrompt { router.present(.quickLog) }
                     CameraButton { router.present(.capture) }
                 }
@@ -104,12 +115,6 @@ struct TodayScreen: View {
                     router.present(.logFood)
                 }
 
-                if let profile, VesselCapabilities.current.canUpgrade, !profile.didDismissUpgradePrompt {
-                    UpgradeCard {
-                        profile.didDismissUpgradePrompt = true
-                        try? context.save()
-                    }
-                }
             }
             .screenGutter()
             .padding(.top, Layout.lg)
@@ -145,6 +150,16 @@ struct TodayScreen: View {
 /// and burying it behind a tab would make the fastest path the least visible.
 private struct QuickLogPrompt: View {
     let onTap: () -> Void
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    /// A capsule while it's one line; a rounded rectangle once large text
+    /// wraps it, where a capsule became a huge oval with its words squeezed
+    /// into the middle.
+    private var shape: AnyShape {
+        typeSize.isAccessibilitySize
+            ? AnyShape(RoundedRectangle(cornerRadius: Layout.radiusMedium, style: .continuous))
+            : AnyShape(Capsule())
+    }
 
     var body: some View {
         Button(action: onTap) {
@@ -155,15 +170,18 @@ private struct QuickLogPrompt: View {
                 Text("Describe a meal…")
                     .font(Typography.body)
                     .foregroundStyle(Palette.inkTertiary)
-                Spacer()
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(Palette.diet.opacity(0.8))
+                Spacer(minLength: 0)
+                if !typeSize.isAccessibilitySize {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(Palette.diet.opacity(0.8))
+                }
             }
             .padding(.horizontal, Layout.lg)
             .padding(.vertical, Layout.md)
-            .background(Palette.surface, in: Capsule())
-            .overlay(Capsule().strokeBorder(Palette.separator, lineWidth: 0.5))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Palette.surface, in: shape)
+            .overlay(shape.stroke(Palette.separator, lineWidth: 0.5))
             .shadow(color: Color(hex: 0x3A2E20).opacity(0.05), radius: 6, y: 2)
         }
         .buttonStyle(.plain)
@@ -202,11 +220,13 @@ private struct StreakCard: View {
     let isAtRisk: Bool
 
     @Environment(AppRouter.self) private var router
+    /// The ring grows with the text inside it, up to a point.
+    @ScaledMetric(relativeTo: .largeTitle) private var ringSize: CGFloat = 104
 
     var body: some View {
         VesselCard(padding: Layout.lg) {
             VStack(alignment: .leading, spacing: Layout.lg) {
-                HStack(alignment: .center, spacing: Layout.lg) {
+                AdaptiveStack(alignment: .center, spacing: Layout.lg) {
                     ZStack {
                         StreakRing(
                             logged: progress.logged,
@@ -224,8 +244,11 @@ private struct StreakCard: View {
                                     .foregroundStyle(Palette.positive)
                                     .padding(.bottom, 1)
                             }
+                            // Scales with Dynamic Type; a fixed 34pt ignored it.
                             Text("\(streak.current)")
-                                .font(.system(size: 34, design: .rounded).weight(.bold))
+                                .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                                .minimumScaleFactor(0.6)
+                                .lineLimit(1)
                                 .monospacedDigit()
                                 .foregroundStyle(progress.isQualified ? Palette.positive : Palette.streak)
                                 .contentTransition(.numericText())
@@ -234,7 +257,7 @@ private struct StreakCard: View {
                                 .foregroundStyle(Palette.inkTertiary)
                         }
                     }
-                    .frame(width: 104, height: 104)
+                    .frame(width: min(ringSize, 168), height: min(ringSize, 168))
 
                     VStack(alignment: .leading, spacing: Layout.xs) {
                         Text(headline)
@@ -254,7 +277,7 @@ private struct StreakCard: View {
                         }
                     }
 
-                    Spacer(minLength: 0)
+                    AdaptiveSpacer(minLength: 0)
                 }
 
                 Divider().overlay(Palette.separator)
@@ -313,6 +336,8 @@ private struct StreakCard: View {
 // MARK: - Energy
 
 private struct EnergyCard: View {
+    @ScaledMetric(relativeTo: .title3) private var energyRingSize: CGFloat = 110
+
     let nutrients: Nutrients
     let goals: DailyGoals
     let onSetGoals: () -> Void
@@ -342,6 +367,9 @@ private struct EnergyCard: View {
                             Circle().strokeBorder(Palette.diet.opacity(0.18), lineWidth: 11)
                         }
                         VStack(spacing: -1) {
+                            // Room for four digits and a comma at the default
+                            // size: at 96pt with this padding "1,954" had to
+                            // shrink to fit.
                             Text(nutrients.kilocalories, format: .number.precision(.fractionLength(0)))
                                 .font(Typography.metricSmall)
                                 .foregroundStyle(Palette.ink)
@@ -352,9 +380,9 @@ private struct EnergyCard: View {
                                 .font(Typography.caption)
                                 .foregroundStyle(Palette.inkTertiary)
                         }
-                        .padding(Layout.md)
+                        .padding(Layout.sm + 2)
                     }
-                    .frame(width: 96, height: 96)
+                    .frame(width: min(energyRingSize, 170), height: min(energyRingSize, 170))
 
                     VStack(alignment: .leading, spacing: Layout.md) {
                         MacroBar(name: "Protein", value: nutrients.proteinG, goal: goals.proteinG, tint: Palette.protein)
@@ -541,7 +569,12 @@ private struct UpgradeCard: View {
                     Button(action: onDismiss) {
                         Image(systemName: "xmark")
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(Palette.inkTertiary)
+                            .foregroundStyle(Palette.inkSecondary)
+                            .frame(width: 28, height: 28)
+                            .background(Palette.separator.opacity(0.5), in: Circle())
+                            // A full fingertip, not just the glyph.
+                            .frame(width: Layout.minTouchTarget, height: Layout.minTouchTarget)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Dismiss")
@@ -560,7 +593,36 @@ private struct UpgradeCard: View {
                     }
                 }
                 .padding(.top, Layout.xs)
+
+                Button {
+                    openSoftwareUpdate()
+                } label: {
+                    Label("Open Software Update", systemImage: "arrow.down.circle")
+                        .font(Typography.bodyEmphasis)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Layout.sm)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Palette.diet)
+                .padding(.top, Layout.sm)
+                .accessibilityIdentifier("openSoftwareUpdate")
             }
+        }
+    }
+
+    /// Opens Settings → General → Software Update.
+    ///
+    /// There is no public URL for that screen. `App-prefs:` reaches it today
+    /// but is undocumented, and App Review can reject apps that use it — so if
+    /// Vessel ships to the App Store this should become the public
+    /// `openSettingsURLString`, which opens the Settings app instead. When the
+    /// private link is refused, that's what happens already.
+    private func openSoftwareUpdate() {
+        let direct = URL(string: "App-prefs:General&path=SOFTWARE_UPDATE_LINK")
+        let settings = URL(string: UIApplication.openSettingsURLString)
+        guard let direct else { return }
+        UIApplication.shared.open(direct) { opened in
+            if !opened, let settings { UIApplication.shared.open(settings) }
         }
     }
 }

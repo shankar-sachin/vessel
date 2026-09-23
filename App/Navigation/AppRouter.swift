@@ -33,6 +33,8 @@ final class AppRouter {
         case newJournalEntry
         case settings
         case capture
+        /// A photo dropped onto the Diet log, read straight into capture.
+        case captureImage(Data)
 
         var id: Self { self }
     }
@@ -79,6 +81,10 @@ final class AppRouter {
     func present(_ sheet: SheetDestination) {
         presentedSheet = sheet
     }
+
+    /// The router of the window most recently brought to the front, for
+    /// things that arrive from outside any window — a Spotlight result.
+    static weak var frontmost: AppRouter?
 
     /// Parses a `vessel://` URL from a notification, the Live Activity, or Siri.
     ///

@@ -1,6 +1,22 @@
 # Vessel
 
-A food, water, journal and symptom diary for iOS and iPadOS, built around one
+[![Release](https://img.shields.io/github/v/release/shankar-sachin/vessel?color=AC5837&label=release)](https://github.com/shankar-sachin/vessel/releases/latest)
+[![Platforms](https://img.shields.io/badge/iOS%20%7C%20iPadOS-18%2B-1A1714)](#building)
+[![watchOS](https://img.shields.io/badge/watchOS-11%2B-1A1714)](#apple-watch)
+[![Swift](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)](https://www.swift.org)
+[![Parser accuracy](https://img.shields.io/badge/parser-98.1%25%20on%20215%20real%20phrasings-1E7A78)](#how-well-it-works)
+[![Privacy](https://img.shields.io/badge/data-on%20device%20only-3F7D52)](#your-data)
+[![Licence](https://img.shields.io/github/license/shankar-sachin/vessel?color=6B5B95)](LICENSE)
+
+<p>
+  <img src="docs/screenshots/today.jpg" width="19%" alt="Today: streak ring, energy and hydration">
+  <img src="docs/screenshots/quick-log.jpg" width="19%" alt="Quick log reading a meal described in plain words">
+  <img src="docs/screenshots/water.jpg" width="19%" alt="Water Diary mid-pour">
+  <img src="docs/screenshots/date-log.jpg" width="19%" alt="Date Log showing a food-symptom pattern">
+  <img src="docs/screenshots/watch-today.jpg" width="15%" alt="Apple Watch: the day at a glance">
+</p>
+
+A food, water, journal and symptom diary for iPhone, iPad and Apple Watch, built around one
 idea: **logging that you felt bloated is nearly useless on its own, and genuinely
 useful next to a timestamped record of everything you ate in the previous day.**
 
@@ -9,6 +25,10 @@ That connection is why all four logs live in one app instead of four.
 Everything runs on your device. There is no account, no server, and no
 telemetry. The only network call Vessel ever makes is a barcode lookup you
 explicitly ask for.
+
+**Contents** — [What it does](#what-it-does) · [The parser](#the-parser) ·
+[The food database](#the-food-database) · [Your data](#your-data) ·
+[Building](#building) · [Status](#status) · [Licence](#licence)
 
 ---
 
@@ -38,6 +58,19 @@ Intelligence through the system's journal schema.
 **Drinks are food, water is water** — milk, juice, coffee and beer go in the
 Diet log with their real nutrients; only water fills the Water diary. Water in
 other drinks and foods counts toward hydration if you turn that on.
+
+**iPad** — A sidebar layout, a window per scene, keyboard shortcuts (⌘N to log,
+⌘1–5 to move between modules), and a photo dragged onto the Diet log is read
+for the food in it.
+
+<a id="apple-watch"></a>**Apple Watch** — The day at a glance, water in one
+tap, and a meal said out loud. Parsed on the wrist with the same model and food
+database as the phone, then handed to the phone to save — so the two never
+disagree about what you ate, and logging works with the phone out of range.
+
+**Accessible** — Every text colour meets WCAG AA in light, dark and increased
+contrast, checked by a test against the real values. Apple's accessibility audit
+runs on every screen, and every screen holds together at the largest text size.
 
 **Streaks** — Three meals a day by default, or whatever matches how you actually
 eat: two meals, OMAD, 16:8, 18:6, or your own. A Live Activity counts down in
@@ -152,7 +185,7 @@ xcodegen generate
 open Vessel.xcodeproj
 ```
 
-Targets iOS/iPadOS 18, with a fuller experience on 26+ (on-device foundation
+Targets iOS/iPadOS 18 and watchOS 11, with a fuller experience on 26+ (on-device foundation
 models as a parsing fallback, streaming transcription, Liquid Glass). iOS 18 is
 a complete app, not a crippled one.
 
@@ -169,6 +202,9 @@ a complete app, not a crippled one.
 | `VesselInsights` | Symptom↔food correlation engine |
 | `VesselIntents` | Siri and Spotlight, and the shared save path every free-text surface uses |
 
+`App/` is the iPhone and iPad app, `Watch/` the Apple Watch app, and
+`StreakWidget/` the Live Activity.
+
 Build-time tools in `Tools/` regenerate the food database and retrain the
 parser; see `CLAUDE.md` for the exact commands and the traps worth knowing about.
 
@@ -180,10 +216,12 @@ Working: all four logs, the parser, the food database, voice, camera, streaks
 and Live Activities, the symptom↔food correlation engine, Siri and Spotlight,
 backup and export.
 
-In progress: iPad and accessibility polish, then a watchOS app.
+Also: iPad (multi-window, keyboard shortcuts, drag and drop), a standalone
+Apple Watch app, an accessibility pass, and an iOS 18 tier that is tested as a
+whole app rather than assumed to work.
 
 **Not yet verified on hardware:** voice transcription, the Dynamic Island's
-rendering, and Siri itself. All are implemented and tested up to the system
+rendering, Siri itself, and the watch talking to a real phone. All are implemented and tested up to the system
 boundary — every intent's `perform()` runs in the test suite, and the build's
 extracted metadata lists each intent, entity and phrase — but a simulator has
 no microphone, doesn't render Live Activity content reliably, and its Siri

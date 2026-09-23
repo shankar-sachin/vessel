@@ -28,6 +28,9 @@ struct CaptureSheet: View {
     @State private var errorMessage: String?
     @State private var selected: Set<String> = []
 
+    /// A photo dropped onto the Diet log on iPad, read as soon as the sheet opens.
+    var droppedImage: Data? = nil
+
     private let recognizer = FoodRecognizer()
     private let search = FoodSearch()
 
@@ -77,6 +80,9 @@ struct CaptureSheet: View {
         }
         .onChange(of: pickedItem) { _, item in
             Task { await load(item) }
+        }
+        .task {
+            if let droppedImage { await read(droppedImage) }
         }
     }
 
@@ -198,9 +204,22 @@ struct CaptureSheet: View {
         isWorking = true
         defer { isWorking = false }
 
-        guard let data = try? await item.loadTransferable(type: Data.self),
-              let ciImage = CIImage(data: data)
-        else {
+        guard let data = try? await item.loadTransferable(type: Data.self) else {
+            errorMessage = "Vessel couldn't read that image."
+            return
+        }
+        await read(data)
+    }
+
+    /// Recognises food in an image, however it arrived — picked or dropped.
+    private func read(_ data: Data) async {
+        errorMessage = nil
+        reading = nil
+        selected = []
+        isWorking = true
+        defer { isWorking = false }
+
+        guard let ciImage = CIImage(data: data) else {
             errorMessage = "Vessel couldn't read that image."
             return
         }

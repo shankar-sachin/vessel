@@ -14,98 +14,58 @@ public enum Palette {
     // MARK: - Ground
 
     /// Page background. Warm parchment in light, near-black warm ink in dark.
-    public static let ground = Color.vessel(
-        light: 0xFAF6F0, dark: 0x121110,
-        lightHC: 0xFFFFFF, darkHC: 0x000000
-    )
+    public static let ground = PaletteTokens.ground.color
 
     /// Raised surface — cards, sheets, grouped rows.
-    public static let surface = Color.vessel(
-        light: 0xFFFFFF, dark: 0x1C1A18,
-        lightHC: 0xFFFFFF, darkHC: 0x222020
-    )
+    public static let surface = PaletteTokens.surface.color
 
     /// A surface resting on another surface (nested cards, popovers).
-    public static let surfaceRaised = Color.vessel(
-        light: 0xFFFDFA, dark: 0x262320,
-        lightHC: 0xFFFFFF, darkHC: 0x2E2B28
-    )
+    public static let surfaceRaised = PaletteTokens.surfaceRaised.color
 
     /// Hairlines and dividers.
-    public static let separator = Color.vessel(
-        light: 0xE4DCD1, dark: 0x332F2B,
-        lightHC: 0x9A9086, darkHC: 0x6A635C
-    )
+    public static let separator = PaletteTokens.separator.color
 
     // MARK: - Ink
 
     /// Primary text.
-    public static let ink = Color.vessel(
-        light: 0x1A1714, dark: 0xF5F0E8,
-        lightHC: 0x000000, darkHC: 0xFFFFFF
-    )
+    public static let ink = PaletteTokens.ink.color
 
     /// Secondary text — subtitles, metadata.
-    public static let inkSecondary = Color.vessel(
-        light: 0x5C5349, dark: 0xB3AAA0,
-        lightHC: 0x3A342D, darkHC: 0xD6CFC6
-    )
+    public static let inkSecondary = PaletteTokens.inkSecondary.color
 
     /// Tertiary text — timestamps, footnotes, disabled.
-    public static let inkTertiary = Color.vessel(
-        light: 0x8C8176, dark: 0x7D746B,
-        lightHC: 0x5C5349, darkHC: 0xA39A91
-    )
+    public static let inkTertiary = PaletteTokens.inkTertiary.color
 
     // MARK: - Module accents
 
     /// Diet Tracker — terracotta. Warm, food-adjacent, appetizing without being loud.
-    public static let diet = Color.vessel(
-        light: 0xC2643F, dark: 0xE08B5F,
-        lightHC: 0x94441F, darkHC: 0xF5A87C
-    )
+    public static let diet = PaletteTokens.diet.color
 
     /// Water Diary — deep teal. Reads unmistakably as water.
-    public static let water = Color.vessel(
-        light: 0x1E7A78, dark: 0x4FBDB4,
-        lightHC: 0x0D5250, darkHC: 0x76D8CF
-    )
+    public static let water = PaletteTokens.water.color
 
     /// Journal — muted violet. Reflective, quieter than the other three.
-    public static let journal = Color.vessel(
-        light: 0x6B5B95, dark: 0x9B8AC4,
-        lightHC: 0x4A3C70, darkHC: 0xB8A9DC
-    )
+    public static let journal = PaletteTokens.journal.color
 
     /// Date Log (symptoms) — soft coral. Signals attention without alarm-red panic.
-    public static let symptom = Color.vessel(
-        light: 0xC94F5D, dark: 0xF08A94,
-        lightHC: 0x9A2F3C, darkHC: 0xFFA8B0
-    )
+    public static let symptom = PaletteTokens.symptom.color
 
     /// Streaks — warm ember. Deliberately distinct from the four module accents
     /// so a streak badge never reads as belonging to one module.
-    public static let streak = Color.vessel(
-        light: 0xD98324, dark: 0xF2A950,
-        lightHC: 0xA35E12, darkHC: 0xFFC078
-    )
+    public static let streak = PaletteTokens.streak.color
 
     // MARK: - Semantic
 
-    public static let positive = Color.vessel(
-        light: 0x3F7D52, dark: 0x6FBF87,
-        lightHC: 0x275538, darkHC: 0x92D9A6
-    )
+    public static let positive = PaletteTokens.positive.color
 
-    public static let caution = Color.vessel(
-        light: 0xB07A16, dark: 0xE0AE4F,
-        lightHC: 0x805508, darkHC: 0xF5C978
-    )
+    public static let caution = PaletteTokens.caution.color
 
-    public static let critical = Color.vessel(
-        light: 0xB03A2E, dark: 0xE8705F,
-        lightHC: 0x821F16, darkHC: 0xFF9484
-    )
+    public static let critical = PaletteTokens.critical.color
+
+    /// Text and glyphs drawn *on* an accent fill — a selected tile, the log
+    /// button. White on the light-theme accents; deep ink on the dark-theme
+    /// ones, which are pale enough that white on them measured 2.0–3.1:1.
+    public static let onAccent = PaletteTokens.onAccent.color
 
     // MARK: - Macro nutrients
     //
@@ -113,8 +73,8 @@ public enum Palette {
     // deficiencies: we separate them by lightness as well as hue, so a ring chart
     // still reads correctly in grayscale.
 
-    public static let protein = Color.vessel(light: 0x8A4F9E, dark: 0xBE8FD0)
-    public static let carbs   = Color.vessel(light: 0xD98324, dark: 0xF2A950)
-    public static let fat     = Color.vessel(light: 0x3E7CA6, dark: 0x79B4DB)
-    public static let fiber   = Color.vessel(light: 0x5C8A3F, dark: 0x9BC97A)
+    public static let protein = PaletteTokens.protein.color
+    public static let carbs = PaletteTokens.carbs.color
+    public static let fat = PaletteTokens.fat.color
+    public static let fiber = PaletteTokens.fiber.color
 }

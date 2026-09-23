@@ -169,6 +169,7 @@ private struct SheetDestinations: ViewModifier {
             case .newJournalEntry: JournalEntrySheet()
             case .settings:        SettingsScreen()
             case .capture:         CaptureSheet()
+            case .captureImage(let data): CaptureSheet(droppedImage: data)
             }
         }
     }

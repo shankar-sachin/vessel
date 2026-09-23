@@ -54,6 +54,9 @@ enum StreakCoordinator {
             leadTime: profile.streakWarningLeadTime,
             now: now
         )
+
+        // The watch face shows the same day, so it hears about every change.
+        WatchBridge.shared.pushSummary(context: context)
     }
 
     // MARK: - Background refresh

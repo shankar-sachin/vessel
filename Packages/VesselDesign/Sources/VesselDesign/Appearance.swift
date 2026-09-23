@@ -1,6 +1,6 @@
 import SwiftUI
 
-#if canImport(UIKit)
+#if os(iOS)
 import UIKit
 #endif
 
@@ -16,12 +16,12 @@ public enum VesselAppearance {
     /// Call once, as early as possible in app startup.
     @MainActor
     public static func configure() {
-        #if canImport(UIKit)
+        #if os(iOS)
         configureNavigationBars()
         #endif
     }
 
-    #if canImport(UIKit)
+    #if os(iOS)
     @MainActor
     private static func configureNavigationBars() {
         // Two appearances, matching what iOS does by default: transparent when

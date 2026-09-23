@@ -49,7 +49,11 @@ struct LogSymptomSheet: View {
     /// flow of pills: equal tiles scan as a set of choices, where ragged pills
     /// read as a paragraph — and a flow layout nested in a Form row is exactly
     /// what once rendered every chip as a tall, empty capsule.
-    private let tileColumns = [GridItem(.adaptive(minimum: 96), spacing: Layout.sm)]
+    ///
+    /// The tile's minimum width scales with the text, so at the largest sizes
+    /// the grid drops to one or two columns instead of splitting words.
+    @ScaledMetric(relativeTo: .footnote) private var tileMinimum: CGFloat = 96
+    private var tileColumns: [GridItem] { [GridItem(.adaptive(minimum: tileMinimum), spacing: Layout.sm)] }
 
     var body: some View {
         LogSheet(
@@ -238,7 +242,7 @@ private struct SymptomTile: View {
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .foregroundStyle(isSelected ? Color.white : Palette.symptom)
+            .foregroundStyle(isSelected ? Palette.onAccent : Palette.symptom)
             .frame(maxWidth: .infinity, minHeight: 64, alignment: .topLeading)
             .padding(.horizontal, 12)
             .padding(.vertical, Layout.md)
@@ -255,6 +259,7 @@ private struct SymptomTile: View {
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(.plain)
+        .vesselHover()
         .accessibilityLabel(kind.title)
         .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }

@@ -58,7 +58,7 @@ public struct VesselChip: View {
             Text(text)
         }
         .font(Typography.captionEmphasis)
-        .foregroundStyle(filled ? Color.white : tint)
+        .foregroundStyle(filled ? Palette.onAccent : tint)
         .padding(.horizontal, Layout.sm)
         .padding(.vertical, 5)
         .background(filled ? tint : tint.opacity(0.12), in: Capsule())
@@ -79,7 +79,7 @@ public struct SectionHeader<Trailing: View>: View {
     }
 
     public var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        AdaptiveStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(Typography.title)
@@ -90,7 +90,7 @@ public struct SectionHeader<Trailing: View>: View {
                         .foregroundStyle(Palette.inkTertiary)
                 }
             }
-            Spacer(minLength: Layout.sm)
+            AdaptiveSpacer(minLength: Layout.sm)
             trailing
         }
         .accessibilityAddTraits(.isHeader)
@@ -156,7 +156,7 @@ public struct FloatingLogButton: View {
         Button(action: action) {
             Image(systemName: "plus")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(Palette.onAccent)
                 // 52pt: comfortably above the 44pt tap minimum without
                 // dominating the screen it floats over. At 58 with a wide glow
                 // it read as the main event rather than a way into one.
@@ -189,6 +189,7 @@ public struct FloatingLogButton: View {
         )
         .accessibilityLabel("Log something")
         .accessibilityHint("Describe a meal, a drink, or how you're feeling")
+        .vesselHover()
         .accessibilityIdentifier("floatingLogButton")
     }
 }

@@ -458,7 +458,7 @@ private struct ResolvedFoodRow: View {
                                     for: variant, term: resolved.phrase
                                 ))
                                 .font(Typography.captionEmphasis)
-                                .foregroundStyle(isChosen ? .white : Palette.diet)
+                                .foregroundStyle(isChosen ? Palette.onAccent : Palette.diet)
                                 .padding(.horizontal, Layout.sm)
                                 .padding(.vertical, 5)
                                 .background(
@@ -536,7 +536,7 @@ private struct MicButton: View {
         Button(action: action) {
             Image(systemName: isListening ? "stop.fill" : "mic.fill")
                 .font(.body.weight(.semibold))
-                .foregroundStyle(isListening ? Color.white : Palette.diet)
+                .foregroundStyle(isListening ? Palette.onAccent : Palette.diet)
                 .frame(width: 36, height: 36)
                 .background(
                     Circle().fill(isListening ? Palette.diet : Palette.diet.opacity(0.14))

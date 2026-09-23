@@ -34,6 +34,13 @@ public struct VesselCapabilities: Sendable, Equatable {
 
     /// The real capabilities of the device this is running on.
     public static let current: VesselCapabilities = {
+        #if DEBUG
+        // Drives the Essential path on a 26+ simulator, since no iOS 18
+        // runtime ships with current Xcode. UI tests launch with it set.
+        if ProcessInfo.processInfo.environment["VESSEL_FORCE_TIER"] == "essential" {
+            return VesselCapabilities(tier: .essential)
+        }
+        #endif
         if #available(iOS 26.0, macOS 26.0, *) {
             return VesselCapabilities(tier: .full)
         }
@@ -72,7 +79,9 @@ public struct VesselCapabilities: Sendable, Equatable {
     /// rather than guessing.
     @MainActor
     public static var osDisplayName: String {
-        #if canImport(UIKit)
+        #if os(watchOS)
+        return "watchOS"
+        #elseif os(iOS)
         switch UIDevice.current.userInterfaceIdiom {
         case .pad: return "iPadOS"
         case .mac: return "macOS"

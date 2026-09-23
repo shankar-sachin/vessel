@@ -26,6 +26,9 @@ struct DietScreen: View {
             .sorted { $0.day > $1.day }
     }
 
+    /// True while a photo is being dragged over the log.
+    @State private var isDropTargeted = false
+
     var body: some View {
         Group {
             if entries.isEmpty {
@@ -76,6 +79,27 @@ struct DietScreen: View {
             }
         }
         .background(Palette.ground)
+        // On iPad, drag a photo from Photos or Files straight onto the log to
+        // read the food in it — the same capture flow as the camera button.
+        .dropDestination(for: Data.self) { items, _ in
+            guard let data = items.first, UIImage(data: data) != nil else { return false }
+            router.present(.captureImage(data))
+            return true
+        } isTargeted: { isDropTargeted = $0 }
+        .overlay {
+            if isDropTargeted {
+                RoundedRectangle(cornerRadius: Layout.radiusLarge, style: .continuous)
+                    .strokeBorder(Palette.diet, style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
+                    .background(Palette.diet.opacity(0.06), in: RoundedRectangle(cornerRadius: Layout.radiusLarge, style: .continuous))
+                    .overlay(Label("Drop a photo to read the food", systemImage: "photo.badge.plus")
+                        .font(Typography.bodyEmphasis)
+                        .foregroundStyle(Palette.diet))
+                    .padding(Layout.md)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+        .vesselAnimation(Motion.quick, value: isDropTargeted)
         .navigationTitle("Diet Tracker")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -109,11 +133,11 @@ struct DayHeader: View {
     let calories: Double
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
+        AdaptiveStack(alignment: .firstTextBaseline) {
             Text(relativeTitle)
                 .font(Typography.title)
                 .foregroundStyle(Palette.ink)
-            Spacer()
+            AdaptiveSpacer()
             Text("\(Int(calories)) kcal")
                 .font(Typography.numeric)
                 .foregroundStyle(Palette.inkTertiary)
@@ -143,14 +167,14 @@ struct FoodEntryCard: View {
     var body: some View {
         VesselCard(padding: Layout.md) {
             VStack(alignment: .leading, spacing: Layout.sm) {
-                HStack(spacing: Layout.sm) {
+                AdaptiveStack(spacing: Layout.sm) {
                     Label(entry.slot.title, systemImage: entry.slot.symbol)
                         .font(Typography.captionEmphasis)
                         .foregroundStyle(Palette.diet)
                     Text(entry.loggedAt, format: .dateTime.hour().minute())
                         .font(Typography.caption)
                         .foregroundStyle(Palette.inkTertiary)
-                    Spacer()
+                    AdaptiveSpacer()
                     // A meal's total, when there is more than one line to add up.
                     if entry.resolvedItems.count > 1 {
                         Text("\(Int(entry.resolvedItems.reduce(0) { $0 + $1.nutrients.kilocalories }.rounded())) kcal")
@@ -161,7 +185,7 @@ struct FoodEntryCard: View {
 
                 ForEach(entry.resolvedItems) { item in
                     let name = FoodName(item.displayName)
-                    HStack(alignment: .firstTextBaseline, spacing: Layout.sm) {
+                    AdaptiveStack(alignment: .firstTextBaseline, spacing: Layout.sm) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(name.title)
                                 .font(Typography.body)
@@ -171,7 +195,7 @@ struct FoodEntryCard: View {
                                 .foregroundStyle(Palette.inkTertiary)
                                 .lineLimit(1)
                         }
-                        Spacer(minLength: Layout.sm)
+                        AdaptiveSpacer(minLength: Layout.sm)
                         Text("\(Int(item.nutrients.kilocalories.rounded())) kcal")
                             .font(Typography.numeric)
                             .foregroundStyle(Palette.inkSecondary)
@@ -183,11 +207,13 @@ struct FoodEntryCard: View {
                 // The verbatim input, shown when we parsed rather than were told —
                 // it's how the user checks our work without opening an editor.
                 if let raw = entry.rawInput, !raw.isEmpty {
+                    // Never cut short: it's what the person said, and at large
+                    // text sizes a two-line cap clipped it mid-sentence.
                     Text("“\(raw)”")
                         .font(Typography.caption)
                         .italic()
                         .foregroundStyle(Palette.inkTertiary)
-                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if entry.needsReview {

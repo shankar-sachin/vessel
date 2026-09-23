@@ -368,11 +368,14 @@ public struct MealProgressRow: View {
                             .foregroundStyle(meal.isLogged ? tint : Palette.inkTertiary)
                     }
 
+                    // Wraps rather than shrinks: shrunk to fit, "Breakfast"
+                    // was smaller than the text the user asked for.
                     Text(meal.title)
                         .font(Typography.caption)
                         .foregroundStyle(meal.isLogged ? Palette.inkSecondary : Palette.inkTertiary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity)
                 .accessibilityElement(children: .combine)

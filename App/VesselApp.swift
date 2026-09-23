@@ -7,18 +7,14 @@ import VesselIntents
 @main
 struct VesselApp: App {
 
+    @MainActor private static var didBootstrap = false
+
     /// Shared with Siri, which runs intents in this same process.
     private let container: ModelContainer = VesselStore.shared
 
-    @State private var router: AppRouter
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        // One router, created here so the Spotlight hook below holds the same
-        // instance SwiftUI does, without reading `@State` before it's installed.
-        let router = AppRouter()
-        _router = State(initialValue: router)
-
         // Navigation titles are styled through UIKit's appearance proxy, which
         // must be set before the first bar is created.
         VesselAppearance.configure()
@@ -34,19 +30,22 @@ struct VesselApp: App {
         IntentsRuntime.didLog = { context in
             await StreakCoordinator.refresh(context: context)
         }
+        // Whichever window was last in front: with several windows open on
+        // iPad, a Spotlight result opens in the one the user was just using.
         IntentsRuntime.openMeal = { _ in
-            router.selectOrPopToRoot(.diet)
+            AppRouter.frontmost?.selectOrPopToRoot(.diet)
         }
         VesselShortcuts.updateAppShortcutParameters()
+        WatchBridge.shared.start(container: container)
     }
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environment(router)
+            // Each window owns its navigation, so two windows on iPad can sit
+            // on different modules without dragging each other along.
+            SceneRoot()
                 .tint(Palette.water)
                 .task { await bootstrap() }
-                .onOpenURL { router.handle(deepLink: $0) }
                 .onChange(of: scenePhase) { _, phase in
                     let context = container.mainContext
                     switch phase {
@@ -66,6 +65,7 @@ struct VesselApp: App {
                 }
         }
         .modelContainer(container)
+        .commands { VesselCommands() }
     }
 
     /// First-run setup.
@@ -75,6 +75,9 @@ struct VesselApp: App {
     /// place instead of scattered as fallbacks.
     @MainActor
     private func bootstrap() async {
+        // Once per launch, not once per window.
+        guard !Self.didBootstrap else { return }
+        Self.didBootstrap = true
         let context = container.mainContext
         _ = UserProfile.current(in: context)
 
@@ -82,6 +85,11 @@ struct VesselApp: App {
         // Seed the simulator with a realistic week so the UI can be developed and
         // reviewed against something other than empty state. Never runs in a
         // release build, and never runs over existing data.
+        // Tests that check the upgrade card start from a fresh, undismissed card.
+        if ProcessInfo.processInfo.environment["VESSEL_RESET_UPGRADE_PROMPT"] == "1" {
+            UserProfile.current(in: context).didDismissUpgradePrompt = false
+            try? context.save()
+        }
         if ProcessInfo.processInfo.environment["VESSEL_SEED_SAMPLE_DATA"] == "1" {
             let existing = try? context.fetchCount(FetchDescriptor<FoodEntry>())
             if (existing ?? 0) == 0 {

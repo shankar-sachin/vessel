@@ -1,7 +1,9 @@
 import SwiftUI
 
-#if canImport(UIKit)
+#if os(iOS)
 import UIKit
+#elseif os(watchOS)
+import WatchKit
 #endif
 
 /// A continuous-feeling slider that snaps to a fixed set of steps.
@@ -189,8 +191,10 @@ public struct SteppedSlider<Value: Hashable & Identifiable>: View {
 
     /// A tick at each step, so the snapping is felt as well as seen.
     private func hapticStep() {
-        #if canImport(UIKit)
+        #if os(iOS)
         UISelectionFeedbackGenerator().selectionChanged()
+        #elseif os(watchOS)
+        WKInterfaceDevice.current().play(.click)
         #endif
     }
 }

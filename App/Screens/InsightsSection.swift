@@ -50,11 +50,11 @@ struct InsightsSection: View {
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
+        AdaptiveStack(alignment: .firstTextBaseline) {
             Label("What your log suggests", systemImage: "chart.dots.scatter")
                 .font(Typography.heading)
                 .foregroundStyle(Palette.ink)
-            Spacer()
+            AdaptiveSpacer()
             if !report.findings.isEmpty {
                 Text("\(report.occasionCount) occasions")
                     .font(Typography.caption)
@@ -81,16 +81,17 @@ private struct FindingCard: View {
     var body: some View {
         VesselCard {
             VStack(alignment: .leading, spacing: Layout.sm) {
-                HStack(alignment: .firstTextBaseline) {
+                AdaptiveStack(alignment: .firstTextBaseline) {
                     Text(finding.trigger.title)
                         .font(Typography.title)
                         .foregroundStyle(Palette.ink)
                     Text("→")
                         .foregroundStyle(Palette.inkTertiary)
+                        .accessibilityHidden(true)
                     Label(finding.symptom.title, systemImage: finding.symptom.symbol)
                         .font(Typography.bodyEmphasis)
                         .foregroundStyle(Palette.symptom)
-                    Spacer()
+                    AdaptiveSpacer()
                 }
 
                 // The sentence the whole feature exists to produce, and the one

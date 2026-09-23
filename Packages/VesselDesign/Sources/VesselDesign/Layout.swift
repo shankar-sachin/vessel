@@ -62,3 +62,50 @@ public extension View {
             .frame(maxWidth: .infinity)
     }
 }
+
+/// A row that becomes a column at accessibility text sizes.
+///
+/// At the largest sizes a horizontal row has no room for its words, and
+/// SwiftUI breaks them mid-letter instead — "Di / n / ne / r", "Dair / y".
+/// Every row that pairs a label with a value, or a title with metadata, goes
+/// through this so it stacks rather than shreds.
+public struct AdaptiveStack<Content: View>: View {
+    @Environment(\.dynamicTypeSize) private var size
+    private let alignment: VerticalAlignment
+    private let spacing: CGFloat?
+    private let content: Content
+
+    public init(alignment: VerticalAlignment = .center, spacing: CGFloat? = nil,
+                @ViewBuilder content: () -> Content) {
+        self.alignment = alignment
+        self.spacing = spacing
+        self.content = content()
+    }
+
+    public var body: some View {
+        if size.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: spacing ?? Layout.xs) { content }
+                .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            HStack(alignment: alignment, spacing: spacing) { content }
+        }
+    }
+}
+
+public extension DynamicTypeSize {
+    /// True when rows should stack. Named for what the caller wants to know.
+    var needsStackedLayout: Bool { isAccessibilitySize }
+}
+
+/// A `Spacer` for `AdaptiveStack`: pushes apart in a row, and disappears in a
+/// column, where a spacer would open a gap down the screen instead.
+public struct AdaptiveSpacer: View {
+    @Environment(\.dynamicTypeSize) private var size
+    private let minLength: CGFloat?
+
+    public init(minLength: CGFloat? = nil) { self.minLength = minLength }
+
+    public var body: some View {
+        if !size.isAccessibilitySize { Spacer(minLength: minLength) }
+    }
+}

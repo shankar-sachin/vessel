@@ -44,7 +44,7 @@ private struct CardBackground: ViewModifier {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
 
         #if canImport(UIKit)
-        if #available(iOS 26.0, *), prefersGlass {
+        if #available(iOS 26.0, watchOS 26.0, *), prefersGlass {
             return AnyView(content.glassEffect(in: shape))
         }
         #endif
@@ -77,6 +77,16 @@ public extension View {
         #endif
     }
 
+    /// Lifts a tappable card or tile under the iPad pointer. Nothing
+    /// elsewhere — there's no pointer to hover with.
+    func vesselHover() -> some View {
+        #if os(iOS)
+        return self.hoverEffect(.lift)
+        #else
+        return self
+        #endif
+    }
+
     /// Applies Liquid Glass where available, and a legible translucent material
     /// everywhere else. For chrome that floats above scrolling content.
     func vesselGlass(in shape: some Shape = Capsule()) -> some View {
@@ -89,7 +99,7 @@ private struct GlassChrome: ViewModifier {
 
     func body(content: Content) -> some View {
         #if canImport(UIKit)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, watchOS 26.0, *) {
             return AnyView(content.glassEffect(in: shape))
         }
         #endif

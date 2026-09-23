@@ -44,6 +44,8 @@ public struct LiquidFill: View {
     @State private var transition: LevelTransition
     /// When the last splash was triggered, or nil if none yet.
     @State private var splashStart: Date?
+    /// True from a change in level or a pour until the liquid has settled.
+    @State private var isActive = false
 
     public init(
         progress: Double,
@@ -79,7 +81,12 @@ public struct LiquidFill: View {
         GeometryReader { geo in
             Group {
                 if isAnimated && !reduceMotion {
-                    TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { timeline in
+                    // 60 fps while liquid is moving, 30 once it has settled
+                    // into the idle ripple. The idle surface moves slowly
+                    // enough that the difference can't be seen, and this view
+                    // otherwise redraws at full rate for as long as it's on
+                    // screen.
+                    TimelineView(.animation(minimumInterval: isActive ? 1.0 / 60.0 : 1.0 / 30.0)) { timeline in
                         canvas(size: geo.size, now: timeline.date)
                     }
                 } else {
@@ -99,6 +106,14 @@ public struct LiquidFill: View {
         .onChange(of: splashToken) { _, _ in
             guard !reduceMotion else { return }
             splashStart = Date()
+        }
+        // Full frame rate for as long as a spring or splash can still be
+        // moving — both are gone well inside two and a half seconds.
+        .task(id: "\(splashToken)-\(progress)") {
+            isActive = true
+            try? await Task.sleep(for: .milliseconds(2500))
+            guard !Task.isCancelled else { return }
+            isActive = false
         }
         .accessibilityElement()
         .accessibilityLabel("Fill level")
