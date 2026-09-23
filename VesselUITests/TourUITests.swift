@@ -5,12 +5,13 @@ import XCTest
 /// Exists to produce review material — screenshots and a screen recording —
 /// from the real app rather than from mockups, so what gets shared is what
 /// actually ships.
+@MainActor
 final class TourUITests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["VESSEL_SEED_SAMPLE_DATA"] = "1"

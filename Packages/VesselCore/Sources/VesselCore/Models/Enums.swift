@@ -100,16 +100,26 @@ public enum SymptomKind: String, Codable, Sendable, CaseIterable, Identifiable {
 
     public var symbol: String {
         switch self {
-        case .bloating, .gas:            return "wind"
-        case .crampingPain, .jointPain:  return "bolt.horizontal"
-        case .nausea, .heartburn:        return "flame"
-        case .diarrhea, .constipation, .urgency: return "drop.triangle"
-        case .headache, .brainFog:       return "brain.head.profile"
-        case .fatigue:                   return "zzz"
-        case .skinFlareUp, .itching:     return "allergens"
-        case .congestion:                return "nose"
-        case .racingHeart:               return "heart"
-        case .other:                     return "questionmark.circle"
+        // One symbol each. Shared glyphs made the picker a wall of identical
+        // tiles — nausea wore heartburn's flame, and three bowel symptoms
+        // were the same warning triangle.
+        case .bloating:     return "balloon"
+        case .gas:          return "wind"
+        case .crampingPain: return "bolt"
+        case .nausea:       return "tornado"
+        case .heartburn:    return "flame"
+        case .diarrhea:     return "drop.triangle"
+        case .constipation: return "hourglass"
+        case .urgency:      return "alarm"
+        case .headache:     return "brain.head.profile"
+        case .fatigue:      return "zzz"
+        case .brainFog:     return "cloud.fog"
+        case .skinFlareUp:  return "allergens"
+        case .itching:      return "hand.draw"
+        case .congestion:   return "nose"
+        case .jointPain:    return "figure.walk"
+        case .racingHeart:  return "waveform.path.ecg"
+        case .other:        return "questionmark.circle"
         }
     }
 

@@ -5,12 +5,13 @@ import XCTest
 /// These drive the same taps a person would make, which is the only way to
 /// catch the failures that matter here — a sheet that won't dismiss, a Save
 /// button that stays disabled, an entry that saves but never appears in its list.
+@MainActor
 final class LoggingFlowUITests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["VESSEL_SEED_SAMPLE_DATA"] = "1"
@@ -118,6 +119,11 @@ final class LoggingFlowUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Log a reaction"].waitForExistence(timeout: 5))
 
         app.buttons["Heartburn or reflux"].tap()
+        // The picker itself, unscrolled. Every earlier capture of this sheet
+        // was taken after scrolling down to the time field, which is how the
+        // chips could render as tall, empty capsules without a screenshot
+        // ever showing it.
+        capture("14-symptom-picker")
 
         // `Form` renders lazily, so a control further down may not exist until
         // it's been scrolled near. Scroll first, then assert.
@@ -178,21 +184,21 @@ final class LoggingFlowUITests: XCTestCase {
 
     // MARK: - Water
 
-    func testLogACustomDrinkAmount() throws {
+    func testLogACustomWaterAmount() throws {
         app.tabBars.buttons["Water"].tap()
         app.buttons["Another amount"].tap()
 
-        XCTAssertTrue(app.navigationBars["Add a drink"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Add water"].waitForExistence(timeout: 5))
+        // Water only: no free-text name, so a coffee can't be filed here.
+        XCTAssertFalse(app.textFields["Container, e.g. Mug"].exists,
+                       "The water sheet must not take a drink name")
 
         app.buttons["330 ml"].tap()
-        let container = app.textFields["Container, e.g. Mug"]
-        XCTAssertTrue(container.waitForExistence(timeout: 3))
-        replaceText(in: container, with: "Can")
         capture("19-water-custom")
 
         app.buttons["Save"].tap()
-        XCTAssertTrue(app.staticTexts["Can"].waitForExistence(timeout: 5),
-                      "The custom drink should appear in today's list")
+        let logged = app.staticTexts.matching(NSPredicate(format: "label CONTAINS '330 ml'")).firstMatch
+        XCTAssertTrue(logged.waitForExistence(timeout: 5), "The water should appear in today's list")
         capture("20-water-after-save")
     }
 }

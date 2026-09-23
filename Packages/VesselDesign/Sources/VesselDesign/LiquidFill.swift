@@ -28,6 +28,15 @@ public struct LiquidFill: View {
     /// Any change in value counts; the number itself is meaningless.
     private let splashToken: Int
 
+    /// The band of the container's height that 0...1 progress maps onto.
+    ///
+    /// A carafe's neck is no place for a surface: mapped over the full height,
+    /// 85% of the goal put the liquid in the shoulder, where the clip turned
+    /// the waves into a V and the wide body below read as a solid slab. The
+    /// water screen maps the goal to the top of the body instead, and lets a
+    /// day over its goal rise a little further.
+    private let levelRange: ClosedRange<Double>
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// The in-flight level transition: where it started, where it's heading, and
@@ -40,19 +49,31 @@ public struct LiquidFill: View {
         progress: Double,
         tint: Color = Palette.water,
         isAnimated: Bool = true,
-        splashToken: Int = 0
+        splashToken: Int = 0,
+        levelRange: ClosedRange<Double> = 0...1
     ) {
         self.progress = progress
         self.tint = tint
         self.isAnimated = isAnimated
         self.splashToken = splashToken
-        let clamped = min(max(progress, 0), 1)
+        self.levelRange = levelRange
+        let clamped = Self.level(for: progress, in: levelRange)
         // Start settled at the initial value, so the first render isn't an
         // animation from empty.
         _transition = State(initialValue: LevelTransition(from: clamped, to: clamped, start: .distantPast))
     }
 
-    private var target: Double { min(max(progress, 0), 1) }
+    private var target: Double { Self.level(for: progress, in: levelRange) }
+
+    /// Progress mapped into the fill band. Up to 15% over the goal still
+    /// shows, so a good day visibly exceeds the line rather than stopping flat.
+    private static func level(for progress: Double, in range: ClosedRange<Double>) -> Double {
+        let span = range.upperBound - range.lowerBound
+        let over = range == 0...1 ? 1.0 : 1.15
+        let clamped = min(max(progress, 0), over)
+        guard clamped > 0 else { return 0 }
+        return min(1, range.lowerBound + clamped * span)
+    }
 
     public var body: some View {
         GeometryReader { geo in
@@ -73,7 +94,7 @@ public struct LiquidFill: View {
             // second drink logged mid-rise continues smoothly instead of
             // snapping back to start.
             let current = transition.level(at: Date(), reduceMotion: reduceMotion)
-            transition = LevelTransition(from: current, to: min(max(newValue, 0), 1), start: Date())
+            transition = LevelTransition(from: current, to: Self.level(for: newValue, in: levelRange), start: Date())
         }
         .onChange(of: splashToken) { _, _ in
             guard !reduceMotion else { return }
@@ -81,12 +102,13 @@ public struct LiquidFill: View {
         }
         .accessibilityElement()
         .accessibilityLabel("Fill level")
-        .accessibilityValue("\(Int((target * 100).rounded())) percent")
+        .accessibilityValue("\(Int((min(max(progress, 0), 1) * 100).rounded())) percent")
     }
 
     private func canvas(size: CGSize, now: Date, staticLevel: Double? = nil) -> some View {
         let level = staticLevel ?? transition.level(at: now, reduceMotion: reduceMotion)
         let splash = staticLevel != nil ? 0 : splashIntensity(at: now)
+        let drop = staticLevel != nil ? nil : dropProgress(at: now)
         let time = now.timeIntervalSinceReferenceDate
 
         return Canvas { context, canvasSize in
@@ -98,9 +120,9 @@ public struct LiquidFill: View {
             // container has little room to slosh, and a big wave at the brim
             // looks wrong. A splash temporarily overrides that calm.
             let calm = 1.0 - (level * 0.5)
-            let baseAmplitude = min(canvasSize.height * 0.030, 8) * calm * (1 + splash * 2.6)
+            let baseAmplitude = min(canvasSize.height * 0.026, 7) * calm * (1 + splash * 1.7)
             // Fresh liquid moves faster before it settles.
-            let speed = 1.0 + splash * 1.8
+            let speed = 1.0 + splash * 1.2
 
             // Three layers rather than two. The third is slow and long, so the
             // surface drifts as well as ripples — two waves alone read as a
@@ -129,15 +151,30 @@ public struct LiquidFill: View {
             context.fill(
                 front,
                 with: .linearGradient(
+                    // Clearer at the surface, deeper toward the base — the
+                    // way light falls through water. The old stops started at
+                    // 98% opacity, which is why a full carafe read as paint.
                     Gradient(stops: [
-                        .init(color: tint.opacity(0.98), location: 0),
-                        .init(color: tint.opacity(0.88), location: 0.35),
-                        .init(color: tint.opacity(0.62), location: 1)
+                        .init(color: tint.opacity(0.62), location: 0),
+                        .init(color: tint.opacity(0.74), location: 0.4),
+                        .init(color: tint.opacity(0.9), location: 1)
                     ]),
                     startPoint: CGPoint(x: 0, y: surfaceY),
                     endPoint: CGPoint(x: 0, y: canvasSize.height)
                 )
             )
+
+            // A drop falling into the vessel, accelerating as it goes. The
+            // pour reads as cause and effect: drop, then ripple.
+            if let drop {
+                let eased = drop * drop
+                let radius = min(canvasSize.width * 0.035, 5)
+                let y = canvasSize.height * 0.02 + (surfaceY - canvasSize.height * 0.02) * eased
+                context.fill(
+                    dropPath(center: CGPoint(x: canvasSize.width / 2, y: y), radius: radius),
+                    with: .color(tint.opacity(0.85))
+                )
+            }
 
             if level > 0.001 {
                 let surface = wavePath(
@@ -163,13 +200,44 @@ public struct LiquidFill: View {
         }
     }
 
+    /// A teardrop, point up, centred on `center`.
+    private func dropPath(center: CGPoint, radius: CGFloat) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: center.x, y: center.y - radius * 2.1))
+        p.addCurve(
+            to: CGPoint(x: center.x, y: center.y + radius),
+            control1: CGPoint(x: center.x + radius * 0.2, y: center.y - radius * 1.2),
+            control2: CGPoint(x: center.x + radius * 1.35, y: center.y + radius)
+        )
+        p.addCurve(
+            to: CGPoint(x: center.x, y: center.y - radius * 2.1),
+            control1: CGPoint(x: center.x - radius * 1.35, y: center.y + radius),
+            control2: CGPoint(x: center.x - radius * 0.2, y: center.y - radius * 1.2)
+        )
+        return p
+    }
+
     /// Splash strength, decaying to nothing about a second and a half after the
     /// pour.
     private func splashIntensity(at now: Date) -> Double {
         guard let splashStart else { return 0 }
-        let elapsed = now.timeIntervalSince(splashStart)
+        // The ripple starts when the drop lands, not when the button is tapped.
+        let elapsed = now.timeIntervalSince(splashStart) - Self.dropDuration
         guard elapsed >= 0, elapsed < 1.6 else { return 0 }
-        return exp(-elapsed / 0.42)
+        // Rises over a tenth of a second rather than starting at full strength,
+        // so the surface is pushed rather than cut.
+        let attack = min(1, elapsed / 0.1)
+        return attack * exp(-elapsed / 0.5)
+    }
+
+    /// How long a drop takes to fall from the neck to the surface.
+    private static let dropDuration: Double = 0.34
+
+    /// Where the falling drop is, 0...1 of its fall, or nil when none is.
+    private func dropProgress(at now: Date) -> Double? {
+        guard let splashStart else { return nil }
+        let t = now.timeIntervalSince(splashStart) / Self.dropDuration
+        return (0..<1).contains(t) ? t : nil
     }
 
     /// Builds the filled area beneath a two-term sine surface.
@@ -306,6 +374,52 @@ public struct VesselShape: Shape {
         p.closeSubpath()
         return p
     }
+}
+
+/// The glass around the water: a soft vertical highlight and a hairline edge,
+/// drawn *over* the liquid so the vessel stays visible however full it is.
+public struct VesselGlass: View {
+    private let tint: Color
+
+    public init(tint: Color = Palette.water) {
+        self.tint = tint
+    }
+
+    public var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                // A highlight down the left of the body, as light catches a
+                // curved glass wall.
+                // Wide and heavily blurred: a narrow stripe read as a
+                // rendering glitch rather than light on a curved wall.
+                Capsule()
+                    .fill(.white.opacity(0.16))
+                    .frame(width: geo.size.width * 0.16, height: geo.size.height * 0.46)
+                    .position(x: geo.size.width * 0.22, y: geo.size.height * 0.64)
+                    .blur(radius: 7)
+
+                VesselShape()
+                    .stroke(tint.opacity(0.3), lineWidth: 1.5)
+            }
+            .clipShape(VesselShape().inset(by: -1))
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+extension VesselShape: InsettableShape {
+    public func inset(by amount: CGFloat) -> some InsettableShape {
+        InsetVessel(amount: amount)
+    }
+}
+
+private struct InsetVessel: InsettableShape {
+    let amount: CGFloat
+    func path(in rect: CGRect) -> Path {
+        VesselShape().path(in: rect.insetBy(dx: amount, dy: amount))
+    }
+    func inset(by more: CGFloat) -> some InsettableShape { InsetVessel(amount: amount + more) }
 }
 
 #Preview("Liquid fill") {

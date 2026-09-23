@@ -11,12 +11,13 @@ import XCTest
 /// So this test asserts something deliberately weak: that the app is still
 /// running afterwards. That is the bug, and a weak assertion that would have
 /// caught it beats a strong one nobody wrote.
+@MainActor
 final class VoiceUITests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["VESSEL_SEED_SAMPLE_DATA"] = "1"
@@ -59,7 +60,6 @@ final class VoiceUITests: XCTestCase {
 
         // And it must resolve to something rather than hang. On a simulator
         // that means the honest refusal; on hardware, listening.
-        let listening = app.staticTexts["Listening…"]
         // How it resolves depends on the hardware, and all of these are fine:
         // on a simulator the recogniser starts and then hears nothing; on a
         // device it listens; with permission refused it says so. What is not

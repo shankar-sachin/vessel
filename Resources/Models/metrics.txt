@@ -1,26 +1,26 @@
-Intent accuracy: 0.9880 (gate 0.90)
+Intent accuracy: 0.9837 (gate 0.90)
 
 Intent confusion (actual → predicted):
-  correction  98.2% correct (220/224)  — missed as logFood ×4
-  journalEntry  97.8% correct (359/367)  — missed as logSymptom ×4, logFood ×2, correction ×1
-  logFood  98.7% correct (2681/2717)  — missed as logWater ×32, logSymptom ×3, correction ×1
-  logSymptom  99.2% correct (700/706)  — missed as logFood ×4, query ×2
-  logWater  99.1% correct (810/817)  — missed as logFood ×7
-  query  99.7% correct (333/334)  — missed as logWater ×1
+  correction  97.9% correct (186/190)  — missed as logFood ×3, logWater ×1
+  journalEntry  98.7% correct (455/461)  — missed as query ×3, logSymptom ×2, correction ×1
+  logFood  98.1% correct (2521/2569)  — missed as logWater ×36, query ×9, correction ×2
+  logSymptom  98.7% correct (674/683)  — missed as query ×7, logWater ×1, logFood ×1
+  logWater  98.3% correct (739/752)  — missed as logFood ×7, query ×6
+  query 100.0% correct (259/259)
 
 Tagger per-label scores:
-  BRAND P 1.000  R 0.974  F1 0.987  (n=189)
-  DRINK P 0.984  R 0.980  F1 0.982  (n=1865)
-  FOOD P 0.981  R 0.991  F1 0.986  (n=9005)
-  MEAL P 0.990  R 0.968  F1 0.979  (n=412)
-  NEG P 0.979  R 0.993  F1 0.986  (n=141)
-  NONE P 0.992  R 0.996  F1 0.994  (n=11758)
-  PREP P 0.950  R 0.846  F1 0.895  (n=635)
-  QTY P 0.997  R 0.990  F1 0.994  (n=3758)
-  SEVERITY P 1.000  R 0.987  F1 0.994  (n=237)
-  SYMPTOM P 0.990  R 0.983  F1 0.987  (n=1027)
-  TIME P 1.000  R 0.957  F1 0.978  (n=352)
-  UNIT P 0.994  R 0.992  F1 0.993  (n=1108)
+  BRAND P 1.000  R 0.980  F1 0.990  (n=150)
+  DRINK P 0.985  R 0.979  F1 0.982  (n=1881)
+  FOOD P 0.982  R 0.991  F1 0.987  (n=8504)
+  MEAL P 0.972  R 0.972  F1 0.972  (n=394)
+  NEG P 0.994  R 0.982  F1 0.988  (n=171)
+  NONE P 0.994  R 0.993  F1 0.994  (n=11168)
+  PREP P 0.942  R 0.864  F1 0.901  (n=579)
+  QTY P 0.990  R 0.992  F1 0.991  (n=3554)
+  SEVERITY P 1.000  R 0.981  F1 0.990  (n=258)
+  SYMPTOM P 0.988  R 0.994  F1 0.991  (n=947)
+  TIME P 0.994  R 0.948  F1 0.970  (n=329)
+  UNIT P 0.993  R 0.995  F1 0.994  (n=939)
 
-Tagger token accuracy: 0.9883
-Tagger macro F1: 0.9795 (gate 0.85)
+Tagger token accuracy: 0.9879
+Tagger macro F1: 0.9791 (gate 0.85)

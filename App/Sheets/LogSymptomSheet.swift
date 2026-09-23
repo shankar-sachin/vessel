@@ -45,6 +45,12 @@ struct LogSymptomSheet: View {
         showsAllCategories ? grouped : grouped.filter { $0.category == "Digestive" }
     }
 
+    /// Three across on a phone, more where there's room. A grid rather than a
+    /// flow of pills: equal tiles scan as a set of choices, where ragged pills
+    /// read as a paragraph — and a flow layout nested in a Form row is exactly
+    /// what once rendered every chip as a tall, empty capsule.
+    private let tileColumns = [GridItem(.adaptive(minimum: 96), spacing: Layout.sm)]
+
     var body: some View {
         LogSheet(
             title: existing == nil ? "Log a reaction" : "Edit reaction",
@@ -52,45 +58,47 @@ struct LogSymptomSheet: View {
             canSave: true,
             onSave: save
         ) {
-            Section("What happened") {
-                ForEach(visibleGroups, id: \.category) { group in
-                    VStack(alignment: .leading, spacing: Layout.sm) {
-                        Text(group.category)
-                            .font(Typography.caption)
-                            .foregroundStyle(Palette.inkTertiary)
-
-                        FlowLayout(spacing: Layout.sm) {
-                            ForEach(group.kinds) { candidate in
-                                Button {
-                                    kind = candidate
-                                } label: {
-                                    Label(candidate.title, systemImage: candidate.symbol)
-                                        .font(Typography.captionEmphasis)
-                                        .foregroundStyle(kind == candidate ? .white : Palette.symptom)
-                                        .padding(.horizontal, Layout.md)
-                                        .padding(.vertical, 7)
-                                        .background(
-                                            kind == candidate ? Palette.symptom : Palette.symptom.opacity(0.12),
-                                            in: Capsule()
-                                        )
+            Section {
+                VStack(alignment: .leading, spacing: Layout.md) {
+                    ForEach(visibleGroups, id: \.category) { group in
+                        VStack(alignment: .leading, spacing: Layout.sm) {
+                            // The group name only earns its place once there
+                            // is more than one group on screen.
+                            if showsAllCategories {
+                                Text(group.category)
+                                    .font(Typography.captionEmphasis)
+                                    .foregroundStyle(Palette.inkTertiary)
+                                    .textCase(.uppercase)
+                            }
+                            LazyVGrid(columns: tileColumns, spacing: Layout.sm) {
+                                ForEach(group.kinds) { candidate in
+                                    SymptomTile(kind: candidate, isSelected: kind == candidate) {
+                                        kind = candidate
+                                    }
                                 }
-                                .buttonStyle(.plain)
-                                .accessibilityAddTraits(kind == candidate ? [.isButton, .isSelected] : .isButton)
                             }
                         }
                     }
-                    .padding(.vertical, 2)
-                }
 
-                if !showsAllCategories {
-                    Button {
-                        withAnimation(Motion.standard) { showsAllCategories = true }
-                    } label: {
-                        Label("Other symptoms", systemImage: "ellipsis.circle")
-                            .font(Typography.callout)
+                    if !showsAllCategories {
+                        Button {
+                            withAnimation(Motion.standard) { showsAllCategories = true }
+                        } label: {
+                            HStack(spacing: Layout.xs) {
+                                Text("More symptoms")
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2.weight(.semibold))
+                            }
+                            .font(Typography.label)
                             .foregroundStyle(Palette.symptom)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
+                .padding(.vertical, Layout.sm)
+                .sensoryFeedback(.selection, trigger: kind)
+            } header: {
+                Text("What happened")
             }
 
             Section("How strong") {
@@ -204,5 +212,50 @@ struct LogSymptomSheet: View {
             ))
         }
         try? context.save()
+    }
+}
+
+
+/// One symptom, as a tile: its symbol above its name.
+private struct SymptomTile: View {
+    let kind: SymptomKind
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: Layout.sm) {
+                Image(systemName: kind.symbol)
+                    .font(.system(size: 20, weight: .regular))
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(height: 22)
+                // Footnote weight, not subheadline: at a third of a phone's
+                // width "Constipation" didn't fit and was hyphenated mid-word.
+                Text(kind.title)
+                    .font(.system(.footnote, weight: .semibold))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .foregroundStyle(isSelected ? Color.white : Palette.symptom)
+            .frame(maxWidth: .infinity, minHeight: 64, alignment: .topLeading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, Layout.md)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(isSelected ? Palette.symptom : Palette.symptom.opacity(0.07))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Palette.symptom.opacity(isSelected ? 0 : 0.14), lineWidth: 1)
+            )
+            .scaleEffect(isSelected ? 1 : 0.98)
+            .vesselAnimation(Motion.quick, value: isSelected)
+            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(kind.title)
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 }

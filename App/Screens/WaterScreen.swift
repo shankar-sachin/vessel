@@ -14,6 +14,7 @@ struct WaterScreen: View {
     /// Incremented on every pour so the hero vessel knows to slosh. The value
     /// itself is meaningless — only the change matters.
     @State private var splashToken = 0
+    @State private var lastPour: (ml: Double, token: Int)?
     @State private var editingEntry: WaterEntry?
     @State private var isAddingCustom = false
 
@@ -67,11 +68,16 @@ struct WaterScreen: View {
                 LiquidFill(
                     progress: goalML > 0 ? todayML / goalML : 0,
                     tint: Palette.water,
-                    splashToken: splashToken
+                    splashToken: splashToken,
+                    // The goal fills the body to the shoulder; the neck stays
+                    // clear, as it would in a real carafe.
+                    levelRange: 0.03...0.62
                 )
                 .clipShape(VesselShape())
-                .overlay(VesselShape().stroke(Palette.water.opacity(0.35), lineWidth: 2))
+                .background(VesselShape().fill(Palette.water.opacity(0.05)))
+                .overlay(VesselGlass(tint: Palette.water))
                 .frame(width: 150, height: 210)
+                .overlay(alignment: .top) { pourLabel }
 
                 VStack(spacing: Layout.xs) {
                     MetricLabel(
@@ -80,13 +86,42 @@ struct WaterScreen: View {
                         tint: Palette.water
                     )
                     .contentTransition(.numericText(value: todayML))
-                    .vesselAnimation(Motion.fluid, value: todayML)
+                    // Standard, not fluid: an overshooting spring left digits
+                    // half-rolled and blurred for most of a second.
+                    .vesselAnimation(Motion.standard, value: todayML)
                     Text(statusText)
                         .font(Typography.callout)
                         .foregroundStyle(Palette.inkSecondary)
                 }
             }
             .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// One "+250 ml" at a time, rising out of the neck. A new pour replaces
+    /// the last rather than stacking on it — stacked labels over the buttons
+    /// were most of why adding water felt cluttered.
+    @ViewBuilder
+    private var pourLabel: some View {
+        if let lastPour {
+            Text("+\(Int(lastPour.ml)) ml")
+                .font(Typography.captionEmphasis)
+                .monospacedDigit()
+                .foregroundStyle(Palette.water)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Palette.water.opacity(0.12), in: Capsule())
+                .offset(y: -6)
+                .id(lastPour.token)
+                .transition(.asymmetric(
+                    insertion: .offset(y: 14).combined(with: .opacity),
+                    removal: .offset(y: -10).combined(with: .opacity)
+                ))
+                .task(id: lastPour.token) {
+                    try? await Task.sleep(for: .milliseconds(1100))
+                    withAnimation(Motion.standard) { self.lastPour = nil }
+                }
+                .accessibilityHidden(true)
         }
     }
 
@@ -103,7 +138,6 @@ struct WaterScreen: View {
                     title: item.label,
                     detail: "\(Int(item.ml)) ml",
                     symbol: item.symbol,
-                    burstText: "+\(Int(item.ml)) ml",
                     tint: Palette.water
                 ) {
                     add(ml: item.ml, name: item.label)
@@ -143,7 +177,7 @@ struct WaterScreen: View {
                                 Image(systemName: entry.containsCaffeine ? "cup.and.saucer.fill" : "drop.fill")
                                     .foregroundStyle(Palette.water)
                                     .frame(width: 22)
-                                Text(entry.containerName ?? "Drink")
+                                Text(entry.containerName ?? "Water")
                                     .font(Typography.body)
                                     .foregroundStyle(Palette.ink)
                                 Spacer()
@@ -184,6 +218,7 @@ struct WaterScreen: View {
         // Tells the vessel to slosh. Haptics live in the button itself, so every
         // quick-add tile in the app feels identical.
         splashToken += 1
+        withAnimation(Motion.fluid) { lastPour = (ml, splashToken) }
     }
 
     private func delete(_ entry: WaterEntry) {

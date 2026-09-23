@@ -3,10 +3,13 @@ import SwiftData
 import VesselCore
 import VesselDesign
 
-/// Logs a drink with a custom amount.
+/// Logs water with a custom amount.
 ///
-/// The quick-add tiles on the Water screen cover the common cases; this is for
-/// everything else — an odd-sized cup, a coffee, a backdated drink.
+/// Water only. The quick-add tiles cover the common pours; this is for an
+/// odd-sized glass or a backdated one. Anything else a person drinks — coffee,
+/// milk, juice, beer — is food with a nutrition label and belongs in the Diet
+/// log, which is why this sheet no longer takes a free-text name or caffeine
+/// and alcohol toggles: they existed only so other drinks could be filed here.
 struct LogWaterSheet: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \UserProfile.createdAt) private var profiles: [UserProfile]
@@ -15,10 +18,7 @@ struct LogWaterSheet: View {
     var existing: WaterEntry?
 
     @State private var volumeML: Double = 250
-    @State private var containerName: String = "Glass"
     @State private var loggedAt: Date = Date()
-    @State private var containsCaffeine = false
-    @State private var containsAlcohol = false
     @State private var didLoad = false
 
     private var isMetric: Bool { (profiles.first?.unitSystem ?? .metric) == .metric }
@@ -28,7 +28,7 @@ struct LogWaterSheet: View {
 
     var body: some View {
         LogSheet(
-            title: existing == nil ? "Add a drink" : "Edit drink",
+            title: existing == nil ? "Add water" : "Edit water",
             tint: Palette.water,
             canSave: volumeML > 0,
             onSave: save
@@ -69,19 +69,10 @@ struct LogWaterSheet: View {
                 .padding(.vertical, 2)
             }
 
-            Section("Details") {
-                TextField("Container, e.g. Mug", text: $containerName)
-                DatePicker("Time", selection: $loggedAt, in: ...Date())
-            }
-
             Section {
-                Toggle("Contains caffeine", isOn: $containsCaffeine)
-                Toggle("Contains alcohol", isOn: $containsAlcohol)
+                DatePicker("Time", selection: $loggedAt, in: ...Date())
             } footer: {
-                // These aren't judgements — they're inputs to the Date Log's
-                // correlation engine, which is worth saying so people flag them
-                // honestly rather than defensively.
-                Text("Vessel counts these toward hydration, and can also check them against how you felt later.")
+                Text("Coffee, milk, juice and other drinks go in the Diet log, with their nutrition.")
             }
         }
         .onAppear(perform: loadIfNeeded)
@@ -94,31 +85,32 @@ struct LogWaterSheet: View {
         didLoad = true
         guard let existing else { return }
         volumeML = existing.volumeML
-        containerName = existing.containerName ?? ""
         loggedAt = existing.loggedAt
-        containsCaffeine = existing.containsCaffeine
-        containsAlcohol = existing.containsAlcohol
     }
 
     private func save() {
-        let name = containerName.trimmingCharacters(in: .whitespacesAndNewlines)
-
         if let existing {
             existing.volumeML = volumeML
-            existing.containerName = name.isEmpty ? nil : name
             existing.loggedAt = loggedAt
-            existing.containsCaffeine = containsCaffeine
-            existing.containsAlcohol = containsAlcohol
         } else {
             context.insert(WaterEntry(
                 loggedAt: loggedAt,
                 volumeML: volumeML,
                 source: .manual,
-                containerName: name.isEmpty ? nil : name,
-                containsCaffeine: containsCaffeine,
-                containsAlcohol: containsAlcohol
+                containerName: Self.containerName(for: volumeML)
             ))
         }
         try? context.save()
+    }
+
+    /// Named after the Water screen's own tiles when the amount matches one,
+    /// so the day's list reads "Glass", "Bottle" rather than bare numbers.
+    static func containerName(for millilitres: Double) -> String {
+        switch millilitres {
+        case 250: return "Glass"
+        case 500: return "Bottle"
+        case 750: return "Large"
+        default: return "Water"
+        }
     }
 }

@@ -2,17 +2,23 @@ import SwiftUI
 import SwiftData
 import VesselCore
 import VesselDesign
+import VesselIntents
 
 @main
 struct VesselApp: App {
 
-    /// Built once at launch, recovering rather than crashing if the store is bad.
-    private let container: ModelContainer = VesselStore.makeContainerRecoveringFromFailure()
+    /// Shared with Siri, which runs intents in this same process.
+    private let container: ModelContainer = VesselStore.shared
 
-    @State private var router = AppRouter()
+    @State private var router: AppRouter
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // One router, created here so the Spotlight hook below holds the same
+        // instance SwiftUI does, without reading `@State` before it's installed.
+        let router = AppRouter()
+        _router = State(initialValue: router)
+
         // Navigation titles are styled through UIKit's appearance proxy, which
         // must be set before the first bar is created.
         VesselAppearance.configure()
@@ -20,6 +26,18 @@ struct VesselApp: App {
         // Background task registration has to happen before launch completes, so
         // it can't wait for a `.task` modifier.
         StreakCoordinator.registerBackgroundTask(container: container)
+
+        // Siri runs intents in this process, sometimes with no window open.
+        // Logging by voice has to refresh the streak exactly as logging in the
+        // app does, and a Spotlight result has to open the right screen.
+        IntentsRuntime.container = container
+        IntentsRuntime.didLog = { context in
+            await StreakCoordinator.refresh(context: context)
+        }
+        IntentsRuntime.openMeal = { _ in
+            router.selectOrPopToRoot(.diet)
+        }
+        VesselShortcuts.updateAppShortcutParameters()
     }
 
     var body: some Scene {

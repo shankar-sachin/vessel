@@ -6,12 +6,13 @@ import XCTest
 /// the engine ran against a real seeded history and produced something a person
 /// could read — including, deliberately, the sentence that says how many
 /// occasions it is based on.
+@MainActor
 final class InsightsUITests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["VESSEL_SEED_SAMPLE_DATA"] = "1"

@@ -423,7 +423,7 @@ private struct HydrationCard: View {
                             .foregroundStyle(Palette.inkTertiary)
 
                         Button(action: onAdd) {
-                            Label("Add a drink", systemImage: "plus")
+                            Label("Add water", systemImage: "plus")
                                 .font(Typography.captionEmphasis)
                         }
                         .buttonStyle(.borderless)

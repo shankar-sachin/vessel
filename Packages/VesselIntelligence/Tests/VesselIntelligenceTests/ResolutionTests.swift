@@ -29,4 +29,15 @@ struct ResolutionTests {
         let foods = resolved("toast with jam").compactMap(\.food)
         #expect(foods.count == 2, "got \(foods.map(\.name))")
     }
+
+    @Test("A percentage is a kind of milk, not an amount")
+    func percentageIsNotAQuantity() {
+        let parsed = pipeline.parse("2% milk")
+        let quantities = parsed.foods.compactMap(\.quantity) + parsed.drinks.compactMap(\.quantity)
+        #expect(!quantities.contains(2), "2% was read as a quantity of 2")
+
+        let names = resolver.resolve(ParsedEntry(intent: .logFood, foods: [ParsedFood(phrase: "2% milk")]))
+            .compactMap { $0.food?.name }
+        #expect(names.first?.contains("2%") == true, "resolved to \(names)")
+    }
 }

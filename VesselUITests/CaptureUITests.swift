@@ -5,12 +5,13 @@ import XCTest
 /// Uses the photo library rather than the camera because a simulator has no
 /// camera — and because logging a picture you already took is a real workflow,
 /// not just a testing convenience.
+@MainActor
 final class CaptureUITests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["VESSEL_SEED_SAMPLE_DATA"] = "1"

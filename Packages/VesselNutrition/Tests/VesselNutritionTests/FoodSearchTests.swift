@@ -386,6 +386,24 @@ struct VariantTests {
         // "whole milk" already answered the question.
         let matches = search.search("whole milk", limit: 8)
         #expect(FoodVariants.options(query: "whole milk", matches: matches).isEmpty)
+        #expect(FoodVariants.options(query: "2% milk", matches: search.search("2% milk", limit: 6)).isEmpty,
+                "a percentage already says which milk")
+    }
+
+    @Test("Milk offers the fat levels people actually choose between")
+    func milkOffersFatLevels() {
+        // The chips used to be the first six search hits: whole, plain,
+        // 2%, evaporated, evaporated whole, lactose free whole. Nobody pouring
+        // milk is choosing between evaporated and lactose-free.
+        let matches = search.search("milk", limit: 6)
+        let labels = FoodVariants.options(query: "milk", matches: matches)
+            .map { FoodVariants.distinguishingLabel(for: $0, term: "milk").lowercased() }
+        for level in ["whole", "2%", "1%", "skim"] {
+            #expect(labels.contains { $0.contains(level) }, "missing \(level) in \(labels)")
+        }
+        for special in ["evaporated", "condensed", "malted", "dry", "lactose"] {
+            #expect(!labels.contains { $0.contains(special) }, "\(special) offered in \(labels)")
+        }
     }
 
     @Test("Variant labels drop the repeated head noun")

@@ -7,12 +7,13 @@ import XCTest
 /// shown before saving*, because that's the design decision the whole feature
 /// rests on — a parser that fills things in invisibly is only pleasant while
 /// it's right.
+@MainActor
 final class QuickLogUITests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["VESSEL_SEED_SAMPLE_DATA"] = "1"
@@ -114,6 +115,20 @@ final class QuickLogUITests: XCTestCase {
                           "\"\(item.text)\" should be read as \(item.expected.lowercased())")
             capture(item.shot)
         }
+    }
+
+    /// The manual route must be reachable from Quick log without typing, and
+    /// must land on the form rather than stack a sheet on a sheet.
+    func testManualRouteOpensTheFoodForm() throws {
+        openQuickLog()
+        let route = app.buttons["quickLogManualRoute"]
+        XCTAssertTrue(route.waitForExistence(timeout: 3), "Choosing foods by hand should always be offered")
+        capture("48-quicklog-manual-route")
+        route.tap()
+        XCTAssertTrue(app.navigationBars["Log food"].waitForExistence(timeout: 5),
+                      "It should open the manual food form")
+        XCTAssertFalse(app.navigationBars["Quick log"].exists, "Quick log should have made way for it")
+        capture("49-manual-form-from-quicklog")
     }
 
     func testExamplesArePresentAndUsable() throws {

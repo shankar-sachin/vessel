@@ -36,10 +36,14 @@ public enum FoodVariants {
         database: FoodDatabase = .shared,
         limit: Int = 6
     ) -> [FoodRecord] {
+        // Split on spaces, not on every non-letter: "2% milk" has already said
+        // which milk, and splitting at the "%" reduced it to a bare "milk"
+        // that asked again.
         let words = query
             .lowercased()
-            .split(whereSeparator: { !$0.isLetter })
-            .map(String.init)
+            .split(whereSeparator: \.isWhitespace)
+            .map { $0.trimmingCharacters(in: .punctuationCharacters.subtracting(CharacterSet(charactersIn: "%"))) }
+            .filter { !$0.isEmpty }
 
         // Only a bare term is ambiguous. "whole milk" already said which one.
         guard words.count == 1, let term = words.first,
@@ -48,19 +52,76 @@ public enum FoodVariants {
 
         // Candidates are rows that are *about* this food, not rows that merely
         // mention it — "Crackers, milk" is a cracker.
-        let candidates = matches
-            .map(\.food)
-            .filter { food in
-                let name = food.name.lowercased()
-                return name.hasPrefix(term)
-                    || name.hasPrefix("\(term),")
-                    || name.split(separator: ",").first?.trimmingCharacters(in: .whitespaces) == term
-            }
+        func isAbout(_ food: FoodRecord) -> Bool {
+            food.name.split(separator: ",").first?
+                .trimmingCharacters(in: .whitespaces).lowercased() == term
+        }
+        let ranked = matches.map(\.food).filter(isAbout)
+
+        // The whole family, not just the handful the search returned: which
+        // choice matters is a property of the family.
+        var seen = Set<String>()
+        let family = (ranked + database.headMatches(heads: [term, term + "s"], limit: 120).filter(isAbout))
+            .filter { seen.insert($0.id).inserted }
+
+        // Trusted only when it contains the row search already chose. For milk
+        // that is whole milk, one of the fat levels. For coffee it's brewed
+        // coffee, and the family's recurring axis turned out to be how instant
+        // coffee is sweetened — a real pattern in the data, but not the
+        // question anyone asking for "coffee" is answering.
+        if let axis = axisOptions(family: family, limit: min(limit, 4)),
+           let top = ranked.first, axis.contains(where: { $0.id == top.id }) {
+            return axis
+        }
+        let fallback = Array(ranked.prefix(limit))
+        return fallback.count >= 2 ? fallback : []
+    }
+
+    /// The variants that differ along the family's main axis.
+    ///
+    /// The question worth asking is the one the family keeps asking itself.
+    /// Across milk's rows the same qualifiers recur — whole, skim, 1%, 2% turn
+    /// up under plain, lactose-free, evaporated and reconstituted milk alike —
+    /// while "malted" or "condensed" are one-offs. So the options are the rows
+    /// qualified by a single clause, ranked by how often that clause closes
+    /// the family's longer names, and shown richest first. For milk that is whole, 2%, 1% and
+    /// skim, without anyone having written down that milk has fat levels.
+    private static func axisOptions(family: [FoodRecord], limit: Int) -> [FoodRecord]? {
+        var recurrence: [String: Int] = [:]
+        let clausesByID = Dictionary(family.map { food in
+            (food.id, FoodSearch.specifiedClauses(of: food.name).filter { !$0.hasPrefix("~") })
+        }, uniquingKeysWith: { first, _ in first })
+        // Counted where a clause *closes* a longer name. Fat levels finish
+        // names across every form of milk — "evaporated, skim", "lactose free,
+        // low fat (1%)" — while "evaporated" is itself a form that fat levels
+        // attach to. Plain recurrence ranked evaporated above 1%.
+        for clauses in clausesByID.values where clauses.count >= 2 {
+            if let last = clauses.last { recurrence[last, default: 0] += 1 }
+        }
+
+        // One row per clause: the most popular row qualified by it alone.
+        var best: [String: FoodRecord] = [:]
+        for food in family {
+            guard let clauses = clausesByID[food.id], clauses.count == 1, let clause = clauses.first,
+                  (recurrence[clause] ?? 0) >= 1
+            else { continue }
+            if let current = best[clause], current.popularity >= food.popularity { continue }
+            best[clause] = food
+        }
+
+        let chosen = best
+            .sorted { (recurrence[$0.key] ?? 0, $0.value.popularity) > (recurrence[$1.key] ?? 0, $1.value.popularity) }
             .prefix(limit)
+            .map(\.value)
+            .sorted { $0.nutrientsPer100g.kilocalories > $1.nutrientsPer100g.kilocalories }
 
-        guard candidates.count >= 2 else { return [] }
-
-        return Array(candidates)
+        // Worth a tap only if the choices actually change the numbers.
+        guard chosen.count >= 2,
+              let high = chosen.first?.nutrientsPer100g.kilocalories,
+              let low = chosen.last?.nutrientsPer100g.kilocalories,
+              high > 0, (high - low) / high > 0.15
+        else { return nil }
+        return Array(chosen)
     }
 
     /// A short label distinguishing a variant from its siblings.

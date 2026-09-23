@@ -17,6 +17,14 @@ public enum VesselStore {
         FoodPairing.self
     ])
 
+    /// The one container for the whole process.
+    ///
+    /// Siri runs intents inside the app's process, sometimes before any
+    /// window exists. Two containers on the same store in one process each
+    /// keep their own view of it, so an entry logged by voice might not show
+    /// up in the open app until relaunch. Everything shares this one instead.
+    public static let shared: ModelContainer = makeContainerRecoveringFromFailure()
+
     /// The app's on-disk container.
     ///
     /// Local-only today, because CloudKit needs a paid Apple Developer Program

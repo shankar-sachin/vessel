@@ -3,6 +3,7 @@ import SwiftData
 import VesselCore
 import VesselDesign
 import VesselIntelligence
+import VesselIntents
 import VesselNutrition
 
 /// Type a meal the way you'd say it, and watch it become an entry.
@@ -15,6 +16,7 @@ import VesselNutrition
 struct QuickLogSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(AppRouter.self) private var router
 
     @State private var input = ""
     @State private var parsed: ParsedEntry?
@@ -28,6 +30,7 @@ struct QuickLogSheet: View {
 
     private let pipeline = ParsePipeline()
     private let resolver = EntryResolver()
+    private var writer: EntryWriter { EntryWriter(context: context, resolver: resolver) }
 
     /// Examples that double as instructions — faster to read than a tooltip,
     /// and tapping one shows what the parser does with it.
@@ -79,7 +82,12 @@ struct QuickLogSheet: View {
 
                 if let parsed, !input.isEmpty {
                     interpretation(parsed)
+                    manualRoute
                 } else if input.isEmpty {
+                    // Straight under the field while it's empty, so it clears
+                    // the keyboard; after a parse it follows the interpretation
+                    // it's an alternative to.
+                    manualRoute
                     Section("Try") {
                         ForEach(examples, id: \.self) { example in
                             Button {
@@ -118,6 +126,59 @@ struct QuickLogSheet: View {
         .onAppear { inputFocused = true }
     }
 
+    // MARK: - Doing it by hand
+
+    /// The way out when the parser isn't getting it.
+    ///
+    /// Always on screen, not only after a bad parse: someone who already
+    /// knows the parser struggles with their phrasing shouldn't have to type a
+    /// sentence first to be offered the form. It follows what was understood
+    /// — a drink offers the drink form, a reaction the reaction form.
+    private var manualRoute: some View {
+        let destination: AppRouter.SheetDestination
+        let title: String
+        switch parsed?.intent {
+        case .logWater:
+            (destination, title) = (.logWater, "Log a drink yourself")
+        case .logSymptom:
+            (destination, title) = (.logSymptom, "Log a reaction yourself")
+        default:
+            (destination, title) = (.logFood, "Choose foods yourself")
+        }
+
+        return Section {
+            Button {
+                voice.cancel()
+                // Swapping the presented sheet dismisses this one and opens the
+                // form in its place, so there's never a sheet stacked on a sheet.
+                router.present(destination)
+            } label: {
+                HStack(spacing: Layout.md) {
+                    Image(systemName: "hand.point.up.left")
+                        .font(.body)
+                        .foregroundStyle(Palette.diet)
+                        .frame(width: 28, height: 28)
+                        .background(Palette.diet.opacity(0.1), in: Circle())
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(Typography.bodyEmphasis)
+                            .foregroundStyle(Palette.ink)
+                        Text("Not reading it right? Search and pick instead.")
+                            .font(Typography.caption)
+                            .foregroundStyle(Palette.inkTertiary)
+                    }
+                    Spacer(minLength: Layout.xs)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(Palette.inkTertiary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("quickLogManualRoute")
+        }
+    }
+
     // MARK: - Interpretation
 
     @ViewBuilder
@@ -148,7 +209,13 @@ struct QuickLogSheet: View {
             Text("Vessel read this as")
         }
 
-        if !resolved.isEmpty {
+        // Drinks are previewed where they will be saved: water in the Water
+        // diary, anything else as food with its calories.
+        let plans = entry.drinks.map { (drink: $0, plan: writer.plan(for: $0)) }
+        let caloricDrinks = plans.filter { if case .food = $0.plan { return true } else { return false } }
+        let waterDrinks = plans.filter { if case .water = $0.plan { return true } else { return false } }
+
+        if !resolved.isEmpty || !caloricDrinks.isEmpty {
             Section("Foods") {
                 ForEach(Array(resolved.enumerated()), id: \.element.id) { index, food in
                     ResolvedFoodRow(
@@ -158,14 +225,17 @@ struct QuickLogSheet: View {
                         onAddCompanion: { term in Task { await addCompanion(term) } }
                     )
                 }
+                ForEach(Array(caloricDrinks.enumerated()), id: \.offset) { _, item in
+                    DrinkAsFoodRow(drink: item.drink, plan: item.plan)
+                }
             }
         }
 
-        if !entry.drinks.isEmpty {
-            Section("Drinks") {
-                ForEach(Array(entry.drinks.enumerated()), id: \.offset) { _, drink in
-                    LabeledContent(drink.name.capitalized) {
-                        Text(drink.millilitres.map { "\(Int($0)) ml" } ?? "—")
+        if !waterDrinks.isEmpty {
+            Section("Water") {
+                ForEach(Array(waterDrinks.enumerated()), id: \.offset) { _, item in
+                    LabeledContent(item.drink.name.capitalized) {
+                        Text("\(Int(item.plan.millilitres)) ml")
                             .font(Typography.numeric)
                             .foregroundStyle(Palette.water)
                     }
@@ -239,19 +309,6 @@ struct QuickLogSheet: View {
     }
 
     /// Ids and names of the foods just saved, for pairing.
-    private func entryFoodIdentities() -> [(id: String, name: String)] {
-        resolved.compactMap { item in
-            guard let food = effectiveFood(for: item) else { return nil }
-            return (food.id, food.displayName)
-        }
-    }
-
-    /// The food actually saved for a row: the hand-picked variant if there is
-    /// one, otherwise whatever the parser resolved.
-    private func effectiveFood(for item: EntryResolver.ResolvedFood) -> FoodRecord? {
-        variantChoices[item.id] ?? item.food
-    }
-
     // MARK: - Voice
 
     private func toggleVoice() async {
@@ -288,91 +345,16 @@ struct QuickLogSheet: View {
 
     private func save() {
         guard let parsed else { return }
-
-        switch parsed.intent {
-        case .logFood, .correction:
-            saveFood(parsed)
-            // "toast and a coffee" is a meal that also names a drink.
-            if !parsed.drinks.isEmpty { saveDrinks(parsed) }
-
-        case .logWater:
-            saveDrinks(parsed)
-            // And the reverse: "a coffee and a biscuit" is mostly a drink, but
-            // the biscuit still belongs in the food log.
-            if !resolved.isEmpty { saveFood(parsed) }
-        case .logSymptom:
-            saveSymptom(parsed)
-        case .journalEntry, .query, .unknown:
-            saveJournal(parsed)
-        }
-
-        // Learn what this person eats together, so "cereal" can eventually
-        // offer their milk because they keep having it — not because a table
-        // said they would.
-        PairingStore.record(
-            foodIDs: entryFoodIdentities(),
-            in: context
+        // The same writer Siri uses, so a sentence means the same thing
+        // wherever it's said.
+        EntryWriter(context: context).write(
+            parsed,
+            resolved: resolved,
+            variantChoices: variantChoices,
+            source: .text
         )
-
-        try? context.save()
         Task { await StreakCoordinator.refresh(context: context) }
         dismiss()
-    }
-
-    private func saveFood(_ parsed: ParsedEntry) {
-        guard !resolved.isEmpty else { return }
-        let entry = FoodEntry(
-            loggedAt: parsed.occurredAt ?? Date(),
-            slot: parsed.slot ?? MealSlot.inferred(from: parsed.occurredAt ?? Date()),
-            source: .text,
-            rawInput: parsed.original,
-            parseConfidence: parsed.confidence
-        )
-        context.insert(entry)
-        entry.items = resolved.map { resolvedFood in
-            let chosen = effectiveFood(for: resolvedFood)
-            let grams = resolvedFood.grams ?? chosen?.defaultPortion?.grams ?? 100
-            let item = FoodItem(
-                foodID: chosen?.id,
-                displayName: chosen?.displayName ?? resolvedFood.phrase.capitalized,
-                quantity: resolvedFood.quantity,
-                unit: resolvedFood.unit,
-                grams: grams,
-                // Recomputed from the chosen variant: picking skimmed milk has
-                // to change the calories, not just the label.
-                nutrients: chosen?.nutrients(forGrams: grams) ?? resolvedFood.nutrients,
-                tags: chosen?.tags ?? []
-            )
-            context.insert(item)
-            return item
-        }
-    }
-
-    private func saveDrinks(_ parsed: ParsedEntry) {
-        for drink in parsed.drinks {
-            context.insert(WaterEntry(
-                loggedAt: parsed.occurredAt ?? Date(),
-                volumeML: drink.millilitres ?? 250,
-                source: .text,
-                containerName: drink.name.capitalized,
-                containsCaffeine: ["coffee", "tea", "espresso", "latte", "cola"]
-                    .contains { drink.name.contains($0) }
-            ))
-        }
-    }
-
-    private func saveSymptom(_ parsed: ParsedEntry) {
-        guard let symptom = parsed.symptom else { return }
-        context.insert(SymptomEntry(
-            occurredAt: parsed.occurredAt ?? Date(),
-            kind: symptom.kind,
-            severity: symptom.severity ?? .moderate,
-            note: parsed.original
-        ))
-    }
-
-    private func saveJournal(_ parsed: ParsedEntry) {
-        context.insert(JournalEntry(body: parsed.original))
     }
 
     // MARK: - Presentation
@@ -563,5 +545,35 @@ private struct MicButton: View {
         .buttonStyle(.plain)
         .accessibilityLabel(isListening ? "Stop listening" : "Dictate")
         .accessibilityIdentifier("quickLogMic")
+    }
+}
+
+
+/// A drink that will be saved as food: its name, amount and energy.
+private struct DrinkAsFoodRow: View {
+    let drink: ParsedDrink
+    let plan: EntryWriter.DrinkPlan
+
+    private var record: FoodRecord? {
+        if case .food(let record, _, _) = plan { return record }
+        return nil
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(record.map { FoodName($0.displayName).title } ?? drink.name.capitalized)
+                    .font(Typography.body)
+                    .foregroundStyle(Palette.ink)
+                Spacer(minLength: Layout.xs)
+                Text("\(Int(plan.kilocalories.rounded())) kcal")
+                    .font(Typography.numeric)
+                    .foregroundStyle(Palette.inkSecondary)
+            }
+            Text("from “\(drink.name)” · \(Int(plan.millilitres)) ml")
+                .font(Typography.caption)
+                .foregroundStyle(Palette.inkTertiary)
+        }
+        .padding(.vertical, 2)
     }
 }

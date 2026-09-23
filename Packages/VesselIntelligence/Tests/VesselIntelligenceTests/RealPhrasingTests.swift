@@ -315,7 +315,15 @@ private let realPhrasings: [Case] = [
     Case("make that a large", .correction),
     Case("oops that was yesterday", .correction),
     Case("undo that", .correction),
-    Case("i said tea not coffee", .correction)
+    Case("i said tea not coffee", .correction),
+    // A percentage names a kind of milk, not an amount. "2% milk" was read as
+    // two servings of whole milk.
+    Case("2% milk", .logWater, food: "milk"),
+    Case("a glass of skim milk", .logWater, food: "milk"),
+    Case("two cups of 1% milk", .logWater, food: "milk", quantity: 2),
+    Case("two percent milk in my coffee", .logWater, food: "milk"),
+    Case("0% greek yogurt with honey", .logFood, food: "yogurt", also: ["honey"]),
+    Case("a latte with oat milk", .logWater, food: "latte")
 ]
 
 @Suite("Real phrasings — generalization")

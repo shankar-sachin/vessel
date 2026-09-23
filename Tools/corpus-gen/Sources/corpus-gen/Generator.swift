@@ -149,7 +149,7 @@ struct Generator {
             example.append(roll(55) ? "," : "and", .none)
             if roll(45) { example.append(roll(50) ? "a" : "some", .none) }
             if roll(30) { example.append(pick(Grammar.drinkModifiers), .none) }
-            example.append(pick(Grammar.drinkNouns), .drink)
+            appendDrinkNoun(to: &example)
             if roll(18) { example.append(pick(Grammar.trailingClauses), .none) }
             return example
         }
@@ -222,6 +222,15 @@ struct Generator {
     /// sentences: the point is that "fry up" behaves grammatically exactly like
     /// "scrambled eggs", not that it gets its own sentence shapes.
     private mutating func pickFoodPhrase() -> String {
+        let phrase = basicFoodPhrase()
+        // "0% greek yogurt": the percentage is part of what the food is.
+        if ["yogurt", "yoghurt", "milk", "cheese", "cream"].contains(where: { phrase.hasSuffix($0) }), roll(30) {
+            return pick(Grammar.dairyKinds) + " " + phrase
+        }
+        return phrase
+    }
+
+    private mutating func basicFoodPhrase() -> String {
         if roll(18) { return pick(Grammar.colloquialDishes) }
         if roll(30), !heads.isEmpty { return pickHead() }
         // A word the tagger has never seen, in a food's position. Real input is
@@ -278,6 +287,17 @@ struct Generator {
         }
     }
 
+    /// A drink name, sometimes with the kind of milk in it — "2% milk", "oat
+    /// latte". The kind is labelled DRINK: it names the drink, and the
+    /// resolver needs it to find the right row.
+    private mutating func appendDrinkNoun(to example: inout Example) {
+        let noun = pick(Grammar.drinkNouns)
+        if Grammar.milkyDrinks.contains(noun), roll(40) {
+            example.append(pick(Grammar.milkKinds), .drink)
+        }
+        example.append(noun, .drink)
+    }
+
     /// "with my tea": only the drink is DRINK. Labelling the whole phrase
     /// taught the tagger that "with" and "my" are part of a drink's name, and it
     /// duly returned drinks called "with my tea".
@@ -300,7 +320,7 @@ struct Generator {
         if roll(22) {
             if roll(30) { example.append("just", .none) }
             if roll(55) { example.append(pick(Grammar.drinkModifiers), .none) }
-            example.append(pick(Grammar.drinkNouns), .drink)
+            appendDrinkNoun(to: &example)
             if roll(34) { example.append(pick(Grammar.mealPhrases), .meal) }
             if roll(20) { example.append(pick(Grammar.timePhrases), .time) }
             if roll(20) { example.append(pick(Grammar.trailingClauses), .none) }
@@ -312,7 +332,7 @@ struct Generator {
         if roll(8) {
             example.append(pick(["finished", "drained", "emptied", "refilled", "downed", "got through"]), .none)
             example.append(pick(["my", "the", "a", "another"]), .none)
-            example.append(pick(Grammar.drinkNouns), .drink)
+            appendDrinkNoun(to: &example)
             example.append(pick(Grammar.drinkVessels), .unit)
             if roll(25) { example.append(pick(Grammar.trailingClauses), .none) }
             return example
@@ -333,7 +353,7 @@ struct Generator {
             }
         }
 
-        example.append(pick(Grammar.drinkNouns), .drink)
+        appendDrinkNoun(to: &example)
         if roll(18) { example.append(pick(Grammar.timePhrases), .time) }
         // A drink is had *with lunch* and *on the way to work* just as often as
         // food is. Only food ever carried these, which is most of why a drink
@@ -518,7 +538,7 @@ struct Generator {
         // correction in the corpus that mentioned a drink.
         if roll(28) {
             if roll(50) { example.append(pick(Grammar.drinkModifiers), .none) }
-            example.append(pick(Grammar.drinkNouns), .drink)
+            appendDrinkNoun(to: &example)
         } else {
             example.append(pickFoodPhrase(), .food)
         }

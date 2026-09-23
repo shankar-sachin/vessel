@@ -27,6 +27,18 @@ meant for reading rather than scanning.
 started* rather than when you got around to typing them, because that's what
 makes correlating them against food possible.
 
+**Siri** — "Log a meal in Vessel", then say what you had as loosely as you
+like. "Log a bottle of water in Vessel", "Log bloating in Vessel", "How am I
+doing in Vessel". Everything said to Siri goes through the same parser and the
+same save path as the app's own input box, asks "which milk?" when that
+changes the numbers, and reads an unsure parse back before saving it. Logged
+meals are searchable in Spotlight, and the journal is available to Apple
+Intelligence through the system's journal schema.
+
+**Drinks are food, water is water** — milk, juice, coffee and beer go in the
+Diet log with their real nutrients; only water fills the Water diary. Water in
+other drinks and foods counts toward hydration if you turn that on.
+
 **Streaks** — Three meals a day by default, or whatever matches how you actually
 eat: two meals, OMAD, 16:8, 18:6, or your own. A Live Activity counts down in
 the Dynamic Island before the day resets.
@@ -62,14 +74,14 @@ was an afternoon.
 
 | | Synthetic (same generator) | **Hand-written real phrasings** |
 |---|---|---|
-| Intent accuracy | 98.8% | **98.1%** (205/209) |
-| Food extraction | — | **97.2%** (104/107) |
+| Intent accuracy | 98.4% | **98.1%** (211/215) |
+| Food extraction | — | **98.2%** (111/113) |
 | Quantity accuracy | — | **100%** (16/16) |
-| Tagger macro F1 | 0.980 | — |
+| Tagger macro F1 | 0.979 | — |
 
 The right-hand column is the one that means anything. The synthetic numbers
 mostly prove the model learned the grammar it was taught, so the evaluation set
-is 209 utterances written by hand in shapes the generator never produces.
+is 215 utterances written by hand in shapes the generator never produces.
 
 The set has only ever grown, and growing it has repeatedly *lowered* the score:
 51 cases scored 94.1%, 71 scored 90.1%, and the 121 written for v1.5.1 scored
@@ -154,8 +166,8 @@ a complete app, not a crippled one.
 | `VesselIntelligence` | The language model, parsing pipeline, voice transcription |
 | `VesselVision` | Barcode, packaging text, image recognition |
 | `VesselActivities` | Live Activity attributes, shared with the widget extension |
-| `VesselInsights` | Symptom↔food correlation *(in progress)* |
-| `VesselIntents` | App Intents / Siri *(in progress)* |
+| `VesselInsights` | Symptom↔food correlation engine |
+| `VesselIntents` | Siri and Spotlight, and the shared save path every free-text surface uses |
 
 Build-time tools in `Tools/` regenerate the food database and retrain the
 parser; see `CLAUDE.md` for the exact commands and the traps worth knowing about.
@@ -165,13 +177,17 @@ parser; see `CLAUDE.md` for the exact commands and the traps worth knowing about
 ## Status
 
 Working: all four logs, the parser, the food database, voice, camera, streaks
-and Live Activities, backup and export.
+and Live Activities, the symptom↔food correlation engine, Siri and Spotlight,
+backup and export.
 
-In progress: the correlation engine, Siri, and a watchOS app.
+In progress: iPad and accessibility polish, then a watchOS app.
 
-**Not yet verified on hardware:** voice transcription and the Dynamic Island's
-rendering. Both are implemented and unit-tested, but a simulator has no
-microphone and doesn't render Live Activity content reliably.
+**Not yet verified on hardware:** voice transcription, the Dynamic Island's
+rendering, and Siri itself. All are implemented and tested up to the system
+boundary — every intent's `perform()` runs in the test suite, and the build's
+extracted metadata lists each intent, entity and phrase — but a simulator has
+no microphone, doesn't render Live Activity content reliably, and its Siri
+can't be driven from a test.
 
 ---
 

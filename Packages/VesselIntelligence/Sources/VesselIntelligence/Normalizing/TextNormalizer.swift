@@ -105,6 +105,7 @@ public struct TextNormalizer: Sendable {
 
         tokens = tokens.filter { !Self.fillers.contains($0) }
         tokens = Self.canonicaliseNumbers(tokens)
+        tokens = Self.joinPercentages(tokens)
 
         let segments = Segmenter.split(tokens: tokens)
         let boundaries: Set<Int>
@@ -122,6 +123,29 @@ public struct TextNormalizer: Sendable {
         )
         result.boundaries = boundaries
         return result
+    }
+
+    /// "2 percent", "2 per cent" → "2%": the spoken form of the same
+    /// descriptor, and dictation writes it either way.
+    static func joinPercentages(_ tokens: [String]) -> [String] {
+        var output: [String] = []
+        var index = 0
+        while index < tokens.count {
+            let token = tokens[index]
+            let isNumber = Double(token) != nil
+            if isNumber, index + 1 < tokens.count, tokens[index + 1] == "percent" {
+                output.append(token + "%")
+                index += 2
+            } else if isNumber, index + 2 < tokens.count,
+                      tokens[index + 1] == "per", tokens[index + 2] == "cent" {
+                output.append(token + "%")
+                index += 3
+            } else {
+                output.append(token)
+                index += 1
+            }
+        }
+        return output
     }
 
     /// Lifts comma markers out of the tokens, remembering which token each
@@ -164,6 +188,12 @@ public struct TextNormalizer: Sendable {
             // "1,000" is one number, not a list.
             if character == ",", index > 0, index + 1 < characters.count,
                characters[index - 1].isNumber, characters[index + 1].isNumber {
+                continue
+            }
+            // "2%" is a kind of milk, not two of anything. Dropping the sign
+            // left a bare "2", which became a quantity of two servings.
+            if character == "%", let last = current.last, last.isNumber {
+                current.append(character)
                 continue
             }
             if character.isLetter || character.isNumber

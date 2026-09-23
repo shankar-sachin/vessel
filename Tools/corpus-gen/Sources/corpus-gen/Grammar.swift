@@ -206,6 +206,21 @@ enum Grammar {
         "decaf", "decaf coffee", "filter coffee", "iced coffee", "oat latte"
     ]
 
+    /// Kinds of milk, which are part of the drink's name rather than its size.
+    /// "2% milk" and "oat latte" name different rows in the database, with
+    /// different energy — a percentage is never an amount.
+    static let milkKinds = [
+        "2%", "1%", "0%", "skim", "skimmed", "semi skimmed", "whole", "full fat",
+        "oat", "almond", "soy", "lactose free", "two percent", "one percent"
+    ]
+    /// Drinks a milk kind attaches to.
+    static let milkyDrinks: Set<String> = [
+        "milk", "latte", "flat white", "cappuccino", "cortado", "mocha",
+        "hot chocolate", "milkshake", "iced coffee"
+    ]
+    /// The same idea for dairy foods: "0% greek yogurt", "low fat cottage cheese".
+    static let dairyKinds = ["0%", "2%", "5%", "low fat", "nonfat", "full fat", "fat free", "light"]
+
     /// Size and style words that attach directly to a drink.
     ///
     /// Without them "large flat white" has no drink-shaped structure at all —

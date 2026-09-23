@@ -6,12 +6,13 @@ import XCTest
 /// that rises when you tap, a streak ring that fills — can't be judged from a
 /// unit test or a static launch screenshot. Each test attaches before/after
 /// screenshots so a visual regression is visible in the result bundle.
+@MainActor
 final class WaterLoggingUITests: XCTestCase {
 
     private var app: XCUIApplication!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["VESSEL_SEED_SAMPLE_DATA"] = "1"

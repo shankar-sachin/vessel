@@ -34,8 +34,10 @@ public struct QuickAddButton: View {
     private let title: String
     private let detail: String
     private let symbol: String
-    /// Text that flies up on tap, e.g. "+250 ml".
-    private let burstText: String
+    /// Text that flies up on tap, e.g. "+250 ml". Nil when the screen shows
+    /// its own confirmation — on the water screen the label rises from the
+    /// vessel instead, where the water actually went.
+    private let burstText: String?
     private let tint: Color
     private let action: () -> Void
 
@@ -46,7 +48,7 @@ public struct QuickAddButton: View {
         title: String,
         detail: String,
         symbol: String,
-        burstText: String,
+        burstText: String? = nil,
         tint: Color = Palette.water,
         action: @escaping () -> Void
     ) {
@@ -88,8 +90,10 @@ public struct QuickAddButton: View {
         // intercept a second tap while in flight.
         .overlay(alignment: .top) {
             ZStack {
-                ForEach(bursts, id: \.self) { id in
-                    RisingLabel(text: burstText, tint: tint, reduceMotion: reduceMotion)
+                if let burstText {
+                    ForEach(bursts, id: \.self) { id in
+                        RisingLabel(text: burstText, tint: tint, reduceMotion: reduceMotion)
+                    }
                 }
             }
             .allowsHitTesting(false)
